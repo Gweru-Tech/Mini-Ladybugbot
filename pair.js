@@ -2703,17 +2703,15 @@ function setupCommandHandlers(socket, number) {
                     text: '❌ *Unknown command*\n\nUse .menu to see available commands'
                 }, { quoted: msg });
             }
-        } catch (error) {
-            console.error('Command handler error:', error);
-            await socket.sendMessage(sender, {
-                image: { url: config.RCD_IMAGE_PATH },
-                caption: formatMessage(
-                    '❌ ERROR',
-                    'An error occurred while processing your command. Please try again.',
-                    'LADYBUG MINI BOT'
-                )
-            });
-        }
+      } catch (error) {
+    console.error('Command handler error:', error);
+    await socket.sendMessage(sender, {
+        image: { url: config.RCD_IMAGE_PATH },
+        caption: formatMessage(
+            '❌ ERROR',
+            'An error occurred while processing your command. Please try again.',
+            'LADYBUG MINI BOT'
+        )
     });
 }
 

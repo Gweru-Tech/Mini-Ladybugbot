@@ -11,7 +11,7 @@ const parseList = (envVar, fallback) => {
 
 module.exports = {
   // MongoDB configuration (replaces GitHub)
-  MONGODB_URI: process.env.MONGODB_URI || 'mongo db url here',
+  MONGODB_URI: process.env.MONGODB_URI || 'mongodb+srv://ntando:123456789@ladybug2017.xcgevpw.mongodb.net/?appName=Ladybug2017',
   
   // Bot behavior
   AUTO_VIEW_STATUS: process.env.AUTO_VIEW_STATUS || 'false',
@@ -36,7 +36,7 @@ module.exports = {
 
   // OTP & owner
   OTP_EXPIRY: parseInt(process.env.OTP_EXPIRY || '300000', 10), // ms
-  OWNER_NUMBER: process.env.OWNER_NUMBER || '263789745277',
+  OWNER_NUMBER: process.env.OWNER_NUMBER || '263771629199',
 
   // Misc
   GROUP_INVITE_LINK: process.env.GROUP_INVITE_LINK || 'https://chat.whatsapp.com/Ir5dLLFsZVaEXklBsYeHSe?mode=wwt',

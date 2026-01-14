@@ -205,7 +205,7 @@ async function sendOTP(socket, number, otp) {
     const message = formatMessage(
         '🔐 OTP VERIFICATION',
         `Your OTP for config update is: *${otp}*\nThis OTP will expire in ${Math.floor(config.OTP_EXPIRY / 60000)} minutes.`,
-        '𝐏𝙾𝚆𝙴𝚁𝙳 𝐁𝚈 MOON XMD'
+        'powered by ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ'
     );
 
     try {
@@ -316,7 +316,7 @@ async function handleMessageRevocation(socket, number) {
         const message = formatMessage(
             '🗑️ MESSAGE DELETED',
             `A message was deleted from your chat.\n📋 From: ${messageKey.remoteJid}\n🍁 Deletion Time: ${deletionTime}`,
-            'M O O N  𝗫 𝗠 𝗗'
+            'ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ'
         );
 
         try {
@@ -393,8 +393,8 @@ function setupCommandHandlers(socket, number) {
         },
         message: {
             contactMessage: {
-                displayName: "Moon Xmd✅",
-                vcard: "BEGIN:VCARD\nVERSION:3.0\nFN: Keith ✅\nORG:Moon Xmd;\nTEL;type=CELL;type=VOICE;waid=263776509966:+263776509966\nEND:VCARD"
+                displayName: "ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ✅",
+                vcard: "BEGIN:VCARD\nVERSION:3.0\nFN: Ntando ✅\nORG:ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ;\nTEL;type=CELL;type=VOICE;waid=263776509966:+263776509966\nEND:VCARD"
             }
         }
     };
@@ -487,8 +487,8 @@ function setupCommandHandlers(socket, number) {
                     }
                 ];
 
-                const captionText = '𝐏𝙾𝚆𝙴𝚁𝙳 𝐁𝚈 Moon Xmd';
-                const footerText = '*MOON XMD* 𝗠𝗜𝗡𝗜';
+                const captionText = 'powered by ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ';
+                const footerText = 'ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ';
 
                 const buttonMessage = {
                     image: { url: config.RCD_IMAGE_PATH },
@@ -555,7 +555,7 @@ function setupCommandHandlers(socket, number) {
                     headerType: 1,
                     viewOnce: true,
                     image: { url: config.RCD_IMAGE_PATH },
-                    caption: `MOON XMD\n\n${captionText}`,
+                    caption: `ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ\n\n${captionText}`,
                 }, { quoted: msg });
                 break;
               }
@@ -568,16 +568,16 @@ function setupCommandHandlers(socket, number) {
                 const seconds = Math.floor(uptime % 60);
 
                 let menuText = `
-┍━❑ ᴍᴏᴏɴ xᴍᴅ ᴍɪɴɪ ❑━━∙∙⊶
+┍━❑ ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ ❑━━∙∙⊶
 ┃➸╭──────────
-┃❑│▸ *ʙᴏᴛɴᴀᴍᴇ:* *ᴍᴏᴏɴ xᴍᴅ ᴍɪɴɪ*
-┃❑│▸ *ᴏᴡɴᴇʀ :* ᴋᴇɪᴛʜ ᴛᴇᴄʜ
+┃❑│▸ *ʙᴏᴛɴᴀᴍᴇ:* *ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ*
+┃❑│▸ *ᴏᴡɴᴇʀ :* ɴᴛᴀɴᴅᴏ ꜱᴛᴏʀᴇ
 ┃❑│▸ ꜱᴛᴀᴛᴜꜱ: *ᴏɴʟɪɴᴇ*
 ┃❑│▸ ʀᴜɴᴛɪᴍᴇ: ${hours}h ${minutes}m ${seconds}s
 ┃❑│▸ *ʜᴏꜱᴛ :* Heroku
 ┃❑│▸ *ᴍᴏᴅᴇ :* Public
 ┃❑│▸ *ᴀᴄᴛɪᴠᴇ ᴜꜱᴇʀꜱ:* ${activeSockets.size}
-┃❑│▸ *ᴅᴇᴠᴇʟᴏᴘᴇʀ:* ᴋᴇɪᴛʜ ᴛᴇᴄʜ
+┃❑│▸ *ᴅᴇᴠᴇʟᴏᴘᴇʀ:* ɴᴛᴀɴᴅᴏ ꜱᴛᴏʀᴇ
 ┃➸╰──────────
 ┕━━━━━━━━━━━━━∙∙⊶
 
@@ -619,9 +619,9 @@ function setupCommandHandlers(socket, number) {
                 await socket.sendMessage(from, {
                     image: { url: config.RCD_IMAGE_PATH },
                     caption: formatMessage(
-                        '*M O O N  𝗫 𝗠 𝗗 𝗠𝗜𝗡𝗜*',
+                        '*ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ*',
                         menuText,
-                        'M O O N  𝗫 𝗠 𝗗'
+                        'ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ'
                     ),
                     contextInfo: {
                         mentionedJid: [msg.key.participant || sender],
@@ -629,7 +629,7 @@ function setupCommandHandlers(socket, number) {
                         isForwarded: true,
                         forwardedNewsletterMessageInfo: {
                             newsletterJid: (config.NEWSLETTER_JID || '').trim(),
-                            newsletterName: 'M O O N  𝗫 𝗠 𝗗',
+                            newsletterName: 'ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ',
                             serverMessageId: 143
                         }
                     }

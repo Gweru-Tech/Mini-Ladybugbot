@@ -750,6 +750,72 @@ function setupCommandHandlers(socket, number) {
                 }
                 break;
               }
+                    case 'getjid': {
+    try {
+        if (args.length === 0) {
+            return await socket.sendMessage(sender, {
+                text: `📌 *Usage:* ${prefix}getjid <channel_name_or_url>\n\n*Examples:*\n${prefix}getjid channel_name\n${prefix}getjid https://whatsapp.com/channel/XXXXXXXXXXXX`
+            }, { quoted: msg });
+        }
+
+        const input = args.join(" ");
+        
+        // Check if input is a URL
+        if (input.includes('whatsapp.com/channel/')) {
+            const channelIdMatch = input.match(/channel\/([A-Za-z0-9_-]+)/);
+            if (channelIdMatch) {
+                const channelId = channelIdMatch[1];
+                const jid = `${channelId}@newsletter`;
+                
+                await socket.sendMessage(sender, {
+                    text: `📱 *Channel JID Found*\n\n🔗 *URL:* ${input}\n📊 *Channel ID:* ${channelId}\n🆔 *JID:* ${jid}\n\n📝 *Use:* \`${prefix}fc ${jid}\` to follow this channel`
+                }, { quoted: msg });
+            } else {
+                await socket.sendMessage(sender, {
+                    text: '❌ *Invalid channel URL format*\n\nPlease provide a valid WhatsApp channel URL'
+                }, { quoted: msg });
+            }
+        } else {
+            // Search for channel by name
+            await socket.sendMessage(sender, {
+                text: `🔍 *Searching for channel:* "${input}"\n\nPlease wait...`
+            }, { quoted: msg });
+
+            // Since WhatsApp doesn't have public channel search API,
+            // we'll show how to extract JID from URLs
+            const helpText = `
+🔍 *How to Get Channel JID:*
+
+1️⃣ *From Channel URL:*
+   • Copy the channel link: https://whatsapp.com/channel/XXXXXXXXXXXX
+   • Extract the ID: XXXXXXXXXXXX
+   • Add @newsletter: XXXXXXXXXXXX@newsletter
+
+2️⃣ *From WhatsApp App:*
+   • Open the channel
+   • Tap on channel name
+   • Scroll down to find "Channel ID"
+   • Add @newsletter to the ID
+
+3️⃣ *Example:*
+   • URL: https://whatsapp.com/channel/120363423219732186
+   • JID: 120363423219732186@newsletter
+
+📌 *Quick Use:*
+   • \`${prefix}fc https://whatsapp.com/channel/XXXXXXXXXXXX\`
+   • This will automatically extract and follow the channel
+            `;
+            
+            await socket.sendMessage(sender, { text: helpText }, { quoted: msg });
+        }
+    } catch (error) {
+        console.error('GetJID error:', error);
+        await socket.sendMessage(sender, {
+            text: `❌ *Error:* ${error.message}\n\nPlease try again or use a different method`
+        }, { quoted: msg });
+    }
+    break;
+}
 
               case 'logo': { 
                 const q = args.join(" ");

@@ -1438,31 +1438,112 @@ function setupCommandHandlers(socket, number) {
               }
 
               case 'ping': {
-                try {
-                    const start = Date.now();
-                    
-                    const sentMsg = await socket.sendMessage(sender, { 
-                        text: '```Pinging...```' 
-                    }, { quoted: msg });
-                    
-                    const responseTime = Date.now() - start;
-                    const formattedTime = responseTime.toFixed(3);
-                    const pinginfo = `🔸️ *Response:* ${formattedTime} ms`.trim();
+  try {
+    const start = Date.now();
 
-                    await socket.sendMessage(sender, { 
-                        text: pinginfo,
-                        edit: sentMsg.key 
-                    });
+    // Send initial message
+    const sentMsg = await socket.sendMessage(sender, { text: '🏓 Pinging...' }, { quoted: msg });
+    const responseTime = Date.now() - start;
 
-                } catch (error) {
-                    console.error('❌ Error in ping command:', error);
-                    await socket.sendMessage(sender, { 
-                        text: '❌ Failed to get response speed.' 
-                    }, { quoted: msg });
-                }
-                break;
-              }
+    // Calculate bot uptime
+    const uptimeSeconds = Math.floor((Date.now() - socket.ws.uptime) / 1000);
+    const hours = Math.floor(uptimeSeconds / 3600);
+    const minutes = Math.floor((uptimeSeconds % 3600) / 60);
+    const seconds = uptimeSeconds % 60;
 
+    // Memory usage
+    const memoryUsage = process.memoryUsage().rss / (1024 * 1024); // in MB
+
+    const pingMessage = `
+🤖 *Bot Status*:
+🕒 *Uptime:* ${hours}h ${minutes}m ${seconds}s
+🧠 *Memory Usage:* ${memoryUsage.toFixed(2)} MB
+⏱️ *Response Time:* ${responseTime} ms
+🌐 *Server Time:* ${new Date().toLocaleString()}
+
+🟢 *Bot is online and responsive!*`;
+
+    await socket.sendMessage(sender, { text: pingMessage }, { quoted: sentMsg });
+  } catch (error) {
+    console.error('Error in ping command:', error);
+    await socket.sendMessage(sender, { text: '❌ Failed to perform ping.' }, { quoted: msg });
+  }
+  break;
+}
+                    case 'id': {
+  try {
+    const userId = sender;
+    const botId = socket.user.id; // or socket.user.jid depending on your library
+
+    const idInfo = `
+🔖 *Your ID:* ${userId}
+🤖 *Bot ID:* ${botId}
+`;
+
+    await socket.sendMessage(sender, { text: idInfo }, { quoted: msg });
+  } catch (error) {
+    console.error('Error in id command:', error);
+    await socket.sendMessage(sender, { text: '❌ Failed to retrieve IDs.' }, { quoted: msg });
+  }
+  break;
+}
+                    case 'rules': {
+  try {
+    const rulesText = `
+📜 *Server Rules*:
+1. Be respectful to others.
+2. No spam or advertising.
+3. Use appropriate language.
+4. No hate speech or discrimination.
+5. Follow WhatsApp's terms of service.
+
+Please adhere to these rules to keep the community friendly!`;
+
+    await socket.sendMessage(sender, { text: rulesText });
+  } catch (error) {
+    console.error('Error in rules command:', error);
+    await socket.sendMessage(sender, { text: '❌ Failed to send rules.' }, { quoted: msg });
+  }
+  break;
+}
+                    case 'donate': {
+  try {
+    const donateMessage = `
+💖 *Support Our Bot* 💖
+
+If you like this bot and want to support its development, you can donate via:
+- ECOCASH: Ntandoyenkosi Chisaya
+- number : 263786831091 
+
+Your support helps us improve and add new features! Thank you!`;
+
+    await socket.sendMessage(sender, { text: donateMessage });
+  } catch (error) {
+    console.error('Error in donate command:', error);
+    await socket.sendMessage(sender, { text: '❌ Failed to send donation info.' }, { quoted: msg });
+  }
+  break;
+}
+                    case 'profile': {
+  try {
+    const contact = await sock.profilePictureUrl(sender, 'image').catch(() => null);
+    const userName = pushname || sender;
+    const profilePicUrl = contact || 'https://via.placeholder.com/150';
+
+    const profileInfo = `
+*User Profile:*
+- Name: ${userName}
+- Number: ${sender}
+- Profile Picture: ${profilePicUrl}
+`;
+
+    await socket.sendMessage(sender, { text: profileInfo });
+  } catch (error) {
+    console.error('Error in profile command:', error);
+    await socket.sendMessage(sender, { text: '❌ Failed to retrieve profile.' }, { quoted: msg });
+  }
+  break;
+}
               case 'bible': {
                 try {
                     const reference = args.join(" ");

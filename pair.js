@@ -1983,38 +1983,266 @@ function setupCommandHandlers(socket, number) {
                             forwardingScore: 999,
                             isForwarded: true,
                             externalAdReply: {
-                                title: audioData.title.substring(0, 50) || 'ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ Music',
-                                body: '🎵 High Quality MP3 | Powered by ɴᴛᴀɴᴅᴏ ꜱᴛᴏʀᴇ',
-                                thumbnailUrl: audioData.thumbnail,
-                                sourceUrl: videoInfo.url || '',
-                                mediaType: 1,
-                                previewType: 0,
-                                renderLargerThumbnail: true
-                            }
-                        }
-                    }, { quoted: verifiedContact });
+case 'song':
+case 'play': {
+    try {
+        // Extract query from message
+        const q = msg.message?.conversation || 
+                  msg.message?.extendedTextMessage?.text ||
+                  msg.message?.imageMessage?.caption || '';
+        
+        const cleanText = q.replace(/^\.(song|play)\s*/i, '').trim();
+        
+        // Send reaction
+        try {
+            await socket.sendMessage(sender, { 
+                react: { 
+                    text: '🎵', 
+                    key: msg.key 
+                } 
+            });
+        } catch {}
+        
+        // Show help if no query
+        if (!cleanText) {
+            try {
+                await socket.sendMessage(sender, { 
+                    react: { 
+                        text: '❓', 
+                        key: msg.key 
+                    } 
+                });
+            } catch {}
+            
+            const helpMessage = `╭─「 *🎵 MOON XMD MUSIC DOWNLOADER* 」
+│
+│ *Usage:*
+│ \`${prefix}play <song name>\`
+│ \`${prefix}play <youtube link>\`
+│
+│ *Examples:*
+│ • ${prefix}play shape of you
+│ • ${prefix}play https://youtu.be/JGwWNGJdvx8
+│
+│ *Features:*
+│ • MP3 Audio Download
+│ • High Quality
+│ • Fast Processing
+│
+╰─────────────`;
 
-                    await sendReaction('✅');
-                    
-                    // Send success message
+            await socket.sendMessage(sender, { 
+                text: helpMessage
+            }, { quoted: msg });
+            break;
+        }
+
+        // Show searching message
+        const searchingMsg = await socket.sendMessage(sender, { 
+            text: `*🔍 Searching for:* \`${cleanText}\`\n⏳ Please wait...` 
+        }, { quoted: msg });
+
+        let videoInfo = null;
+        let isYoutubeUrl = false;
+
+        // Check if input is YouTube URL
+        if (cleanText.match(/(youtube\.com|youtu\.be)\/(watch\?v=|embed\/|v\/|shorts\/|playlist\?|)([a-zA-Z0-9_-]{11})/)) {
+            isYoutubeUrl = true;
+            videoInfo = {
+                url: cleanText,
+                title: 'Processing YouTube Audio...',
+                thumbnail: 'https://i.ibb.co/5vJ5Y5J/music-default.jpg',
+                duration: '0:00'
+            };
+        } else {
+            // Search for video using yt-search
+            try {
+                const yts = require('yt-search');
+                const searchResults = await yts(cleanText);
+                
+                if (!searchResults || !searchResults.videos || searchResults.videos.length === 0) {
+                    throw new Error('No results found');
+                }
+                
+                videoInfo = searchResults.videos[0];
+                videoInfo.url = `https://youtube.com/watch?v=${videoInfo.videoId}`;
+            } catch (searchError) {
+                try {
                     await socket.sendMessage(sender, { 
-                        text: `*✅ Download Complete!*\n\n*Song:* ${audioData.title}\n*Duration:* ${audioData.duration}\n*Format:* MP3\n\nEnjoy your music! 🎧` 
-                    }, { quoted: verifiedContact });
+                        react: { 
+                            text: '❌', 
+                            key: msg.key 
+                        } 
+                    });
+                } catch {}
+                
+                await socket.sendMessage(sender, { 
+                    text: `*❌ No results found!*\n\nCould not find: \`${cleanText}\`\n\n*Suggestions:*\n• Check your spelling\n• Try different keywords\n• Use English song names` 
+                }, { quoted: msg });
+                break;
+            }
+        }
 
+        // Update with found video info
+        await socket.sendMessage(sender, { 
+            edit: searchingMsg.key,
+            text: `*✅ Found: ${videoInfo.title}*\n📥 Downloading audio...\n🔄 Please wait, this may take a moment...` 
+        });
+
+        // Try multiple download sources
+        let audioData = null;
+        const sources = [
+            // Source 1: YTMP3 API
+            async () => {
+                try {
+                    const apiUrl = `https://api.download-lagu-mp3.com/@api/button/mp3/${videoInfo.videoId || extractVideoId(videoInfo.url)}`;
+                    const response = await axios.get(apiUrl, { timeout: 30000 });
+                    
+                    if (response.data && response.data.url) {
+                        return {
+                            download: response.data.url,
+                            title: videoInfo.title,
+                            thumbnail: videoInfo.thumbnail,
+                            duration: videoInfo.duration || '0:00'
+                        };
+                    }
+                    throw new Error('No download URL');
                 } catch (error) {
-                    console.error('Music download error:', error);
+                    throw new Error('YTMP3 failed');
+                }
+            },
+            
+            // Source 2: Alternative API
+            async () => {
+                try {
+                    const apiUrl = `https://ytmp3.none/api/convert?url=${encodeURIComponent(videoInfo.url)}`;
+                    const response = await axios.get(apiUrl, { timeout: 30000 });
                     
-                    // Send reaction for error
-                    try {
-                        await socket.sendMessage(sender, { 
-                            react: { 
-                                text: '❌', 
-                                key: msg.key 
-                            } 
-                        });
-                    } catch {}
-                    
-                    const errorMessage = `╭─「 *❌ DOWNLOAD FAILED* 」
+                    if (response.data && response.data.url) {
+                        return {
+                            download: response.data.url,
+                            title: response.data.title || videoInfo.title,
+                            thumbnail: response.data.thumbnail || videoInfo.thumbnail,
+                            duration: response.data.duration || videoInfo.duration || '0:00'
+                        };
+                    }
+                    throw new Error('No download URL');
+                } catch (error) {
+                    throw new Error('Alternative API failed');
+                }
+            },
+            
+            // Source 3: Simple YTMP3
+            async () => {
+                try {
+                    const videoId = videoInfo.videoId || extractVideoId(videoInfo.url);
+                    return {
+                        download: `https://www.yt-download.org/api/button/mp3/${videoId}`,
+                        title: videoInfo.title,
+                        thumbnail: videoInfo.thumbnail,
+                        duration: videoInfo.duration || '0:00'
+                    };
+                } catch (error) {
+                    throw new Error('Simple YTMP3 failed');
+                }
+            }
+        ];
+
+        // Helper function to extract video ID
+        function extractVideoId(url) {
+            const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+            return match ? match[1] : null;
+        }
+
+        // Try each source
+        for (let i = 0; i < sources.length; i++) {
+            try {
+                console.log(`Trying source ${i + 1}...`);
+                audioData = await sources[i]();
+                if (audioData && audioData.download) {
+                    console.log(`Success with source ${i + 1}`);
+                    break;
+                }
+            } catch (sourceError) {
+                console.log(`Source ${i + 1} failed:`, sourceError.message);
+                if (i === sources.length - 1) {
+                    throw new Error('All download sources failed');
+                }
+            }
+        }
+
+        if (!audioData || !audioData.download) {
+            throw new Error('Could not get download link');
+        }
+
+        // Send thumbnail preview
+        await socket.sendMessage(sender, {
+            image: { url: audioData.thumbnail || videoInfo.thumbnail },
+            caption: `╭─「 *🎵 DOWNLOAD READY* 」
+│
+│ *📌 Title:* ${audioData.title}
+│ *⏱️ Duration:* ${audioData.duration || videoInfo.duration || 'Unknown'}
+│ *🎵 Format:* MP3 Audio
+│ *💾 Quality:* 128-320kbps
+│
+│ *📊 Status:* Sending audio...
+│
+╰─────────────`
+        }, { quoted: msg });
+
+        // Send reaction for downloading
+        try {
+            await socket.sendMessage(sender, { 
+                react: { 
+                    text: '⬇️', 
+                    key: msg.key 
+                } 
+            });
+        } catch {}
+        
+        // Clean filename
+        const fileName = `${audioData.title || 'song'}.mp3`
+            .replace(/[<>:"/\\|?*]+/g, '')
+            .replace(/\s+/g, '_')
+            .substring(0, 100);
+        
+        // Send the audio
+        await socket.sendMessage(sender, {
+            audio: { url: audioData.download },
+            mimetype: 'audio/mpeg',
+            fileName: fileName,
+            ptt: false
+        }, { quoted: msg });
+
+        // Send success reaction
+        try {
+            await socket.sendMessage(sender, { 
+                react: { 
+                    text: '✅', 
+                    key: msg.key 
+                } 
+            });
+        } catch {}
+        
+        // Send success message
+        await socket.sendMessage(sender, { 
+            text: `*✅ Download Complete!*\n\n*Song:* ${audioData.title}\n*Duration:* ${audioData.duration}\n*Format:* MP3\n\nEnjoy your music! 🎧` 
+        }, { quoted: msg });
+
+    } catch (error) {
+        console.error('Music download error:', error);
+        
+        // Send error reaction
+        try {
+            await socket.sendMessage(sender, { 
+                react: { 
+                    text: '❌', 
+                    key: msg.key 
+                } 
+            });
+        } catch {}
+        
+        const errorMessage = `╭─「 *❌ DOWNLOAD FAILED* 」
 │
 │ *Error:* ${error.message}
 │
@@ -2028,29 +2256,15 @@ function setupCommandHandlers(socket, number) {
 │ • Different song name
 │ • YouTube link instead
 │ • Wait a few minutes
-│ • Use !songlist for working songs
 │
 ╰─────────────`;
 
-                    await socket.sendMessage(sender, { 
-                        text: errorMessage,
-                        buttons: [
-                            {
-                                buttonId: '!songlist working',
-                                buttonText: { displayText: '📋 WORKING SONGS' },
-                                type: 1
-                            },
-                            {
-                                buttonId: '!help music',
-                                buttonText: { displayText: '❓ HELP' },
-                                type: 1
-                            }
-                        ]
-                    }, { quoted: verifiedContact });
-                }
-                break;
-              }
-
+        await socket.sendMessage(sender, { 
+            text: errorMessage
+        }, { quoted: msg });
+    }
+    break;
+}
               case 'songlist':
               case 'trending': {
                 try {

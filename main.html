@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Ntandohost | LADYBUG-BOT MINI | PAIR CODE</title>
+  <title>Ntandohost | Premium Hosting Services</title>
   <link rel="icon" href="/favicon.ico" type="image/x-icon" />
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
@@ -34,132 +34,107 @@
       color: var(--star-white);
       min-height: 100vh;
       overflow-x: hidden;
-      position: relative;
     }
 
-    #night-sky {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 1;
-      pointer-events: none;
-    }
-
-    .star {
-      position: absolute;
-      background: white;
-      border-radius: 50%;
-      animation: twinkle 3s infinite;
-    }
-
-    @keyframes twinkle {
-      0%, 100% { opacity: 0.3; transform: scale(1); }
-      50% { opacity: 1; transform: scale(1.2); }
-    }
-
-    .moon {
-      position: fixed;
-      top: 80px;
-      right: 10%;
-      width: 120px;
-      height: 120px;
-      background: radial-gradient(circle at 30% 30%, #fff, #e8f1ff);
-      border-radius: 50%;
-      box-shadow: 0 0 60px rgba(232, 241, 255, 0.6),
-                  0 0 100px rgba(100, 181, 246, 0.4),
-                  inset -10px -10px 20px rgba(0, 0, 0, 0.1);
-      z-index: 2;
-      animation: moonFloat 6s ease-in-out infinite;
-    }
-
-    @keyframes moonFloat {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-20px); }
-    }
-
-    .moon-crater {
-      position: absolute;
-      background: rgba(200, 200, 200, 0.3);
-      border-radius: 50%;
-    }
-
+    /* Night Sky & Moon */
+    #night-sky { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+    .star { position: absolute; background: white; border-radius: 50%; animation: twinkle 3s infinite; }
+    @keyframes twinkle { 0%, 100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 1; transform: scale(1.2); } }
+    .moon { position: fixed; top: 80px; right: 10%; width: 120px; height: 120px; background: radial-gradient(circle at 30% 30%, #fff, #e8f1ff); border-radius: 50%; box-shadow: 0 0 60px rgba(232, 241, 255, 0.6), 0 0 100px rgba(100, 181, 246, 0.4), inset -10px -10px 20px rgba(0, 0, 0, 0.1); z-index: 2; animation: moonFloat 6s ease-in-out infinite; }
+    @keyframes moonFloat { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-20px); } }
+    .moon-crater { position: absolute; background: rgba(200, 200, 200, 0.3); border-radius: 50%; }
     .crater1 { width: 20px; height: 20px; top: 30%; left: 25%; }
     .crater2 { width: 15px; height: 15px; top: 50%; left: 60%; }
     .crater3 { width: 12px; height: 12px; top: 65%; left: 35%; }
 
-    /* Hosting site header styling */
+    /* Header Navigation */
     .host-header {
-      width: 100%;
-      background: var(--glass-bg);
-      backdrop-filter: blur(20px);
-      border-bottom: 1px solid var(--glass-border);
-      padding: 1rem 2rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: fixed;
-      top: 0;
-      z-index: 1000;
-      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+      width: 100%; background: var(--glass-bg); backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--glass-border); padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; position: fixed; top: 0; z-index: 1000; box-shadow: 0 4px 30px rgba(0,0,0,0.3);
     }
+    .nav-links { display: flex; gap: 1.5rem; }
+    .nav-link { color: var(--star-white); text-decoration: none; font-weight: 600; transition: color 0.3s; }
+    .nav-link:hover { color: var(--bright-blue); }
 
-    .host-title {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 2rem;
-      font-weight: 900;
-      color: var(--star-white);
-      display: flex;
-      align-items: center;
-      gap: 0.8rem;
-    }
-
-    /* Adjust container top padding to avoid overlay with header */
+    /* Main Container */
     .container {
-      padding-top: 80px; /* height of header + some margin */
-      position: relative;
-      z-index: 10;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 140px 20px 40px;
+      padding-top: 100px; /* space for header */
+      display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: calc(100vh - 100px);
     }
 
-    /* Existing styles ... (no change here) */
+    /* Hero / Intro Section */
+    .hero {
+      text-align: center; max-width: 800px; padding: 2rem;
+    }
+    .hero-title {
+      font-family: 'Orbitron', sans-serif; font-size: 3rem; font-weight: 900; background: linear-gradient(135deg, #64b5f6, #e8f1ff, #4a90e2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 1rem; text-shadow: 0 0 20px rgba(100, 181, 246, 0.8);
+    }
+    .hero-subtitle { font-size: 1.2rem; color: var(--moon-glow); margin-bottom: 2rem; }
 
-    /* Footer styles */
+    /* Features Section */
+    .features {
+      display: flex; flex-wrap: wrap; gap: 2rem; margin-top: 3rem; justify-content: center; width: 100%; max-width: 1000px;
+    }
+    .feature-card {
+      background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px; padding: 2rem; flex: 1 1 250px; max-width: 300px; text-align: center; transition: transform 0.3s;
+    }
+    .feature-card:hover { transform: translateY(-5px); }
+    .feature-icon { font-size: 2.5rem; color: var(--bright-blue); margin-bottom: 1rem; }
+    .feature-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .feature-desc { font-size: 0.95rem; color: var(--moon-glow); }
+
+    /* Hosting Plans */
+    .plans {
+      display: flex; flex-wrap: wrap; gap: 2rem; margin-top: 3rem; width: 100%; max-width: 1000px; justify-content: center;
+    }
+    .plan-card {
+      background: var(--glass-bg); border: 2px solid var(--glass-border); border-radius: 16px; padding: 2rem; flex: 1 1 250px; max-width: 300px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    .plan-title { font-family: 'Orbitron', sans-serif; font-size: 1.5rem; margin-bottom: 1rem; color: var(--bright-blue); }
+    .plan-price { font-size: 2rem; margin-bottom: 1rem; }
+    .plan-features { list-style: none; margin-bottom: 1.5rem; padding: 0; }
+    .plan-features li { margin: 0.5rem 0; }
+    .btn-buy { padding: 1rem; background: linear-gradient(135deg, #4a90e2, #64b5f6); border: none; border-radius: 12px; color: white; font-weight: 700; cursor: pointer; transition: all 0.3s; margin-top: 1rem; }
+    .btn-buy:hover { box-shadow: 0 4px 20px rgba(74, 144, 226, 0.5); }
+    
+    /* Testimonials Slider */
+    .testimonials {
+      margin-top: 4rem; width: 100%; max-width: 800px; padding: 2rem; background: rgba(10,14,39,0.4); border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+    .testimonial {
+      font-size: 1.1rem; font-style: italic; margin-bottom: 1.5rem; text-align: center; color: var(--moon-glow);
+    }
+
+    /* Contact Form */
+    .contact {
+      margin-top: 4rem; width: 100%; max-width: 600px; padding: 2rem; background: rgba(10,14,39,0.4); border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+    .contact h3 { margin-bottom: 1rem; color: var(--bright-blue); }
+    .contact-form { display: flex; flex-direction: column; gap: 1rem; }
+    .contact-input { padding: 0.75rem; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(10,14,39,0.5); color: var(--star-white); }
+    .contact-btn { padding: 1rem; background: linear-gradient(135deg, #4a90e2, #64b5f6); border: none; border-radius: 12px; color: white; font-weight: 700; cursor: pointer; transition: all 0.3s; }
+    .contact-btn:hover { box-shadow: 0 4px 20px rgba(74, 144, 226, 0.5); }
+
+    /* Footer */
     footer {
-      text-align: center;
-      padding: 2rem;
-      color: var(--moon-glow);
-      opacity: 0.8;
-      font-size: 0.9rem;
-      position: relative;
-      z-index: 10;
-      margin-top: 2rem;
+      text-align: center; padding: 2rem; margin-top: 4rem; color: var(--moon-glow); font-size: 0.9rem; position: relative; z-index: 10;
     }
+    .footer-social { display: flex; gap: 1rem; justify-content: center; margin-top: 1rem; }
+    .footer-social a { color: var(--star-white); font-size: 1.4rem; transition: color 0.3s; }
+    .footer-social a:hover { color: var(--bright-blue); }
 
-    footer span {
-      color: var(--bright-blue);
-      font-weight: 700;
-    }
-
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
+    /* Responsive */
+    @media(max-width:768px){
       .hero-title { font-size: 2.5rem; }
-      .moon { width: 80px; height: 80px; right: 5%; top: 70px; }
-      .pair-card { padding: 2rem; }
+      .host-header { flex-direction: column; align-items: center; }
+      .nav-links { flex-direction: column; align-items: center; }
     }
+
   </style>
 </head>
-
 <body>
   <!-- Starry night sky -->
   <div id="night-sky"></div>
-  
   <!-- Moon -->
   <div class="moon">
     <div class="moon-crater crater1"></div>
@@ -167,164 +142,141 @@
     <div class="moon-crater crater3"></div>
   </div>
 
-  <!-- Hosting site header -->
+  <!-- Navigation Header -->
   <div class="host-header">
-    <div class="host-title">
+    <div class="logo" style="display:flex; align-items:center; gap:0.8rem;">
       <i class="fas fa-server"></i> Ntandohost
+    </div>
+    <div class="nav-links">
+      <a href="#home" class="nav-link">Home</a>
+      <a href="#features" class="nav-link">Features</a>
+      <a href="#plans" class="nav-link">Plans</a>
+      <a href="#testimonials" class="nav-link">Testimonials</a>
+      <a href="#contact" class="nav-link">Contact</a>
     </div>
   </div>
 
-  <!-- Main content container -->
+  <!-- Main Content -->
   <div class="container">
-    <h1 class="hero-title">LADYBUG BOT MINI</h1>
-    <p class="subtitle">✨ Connect with the stars ✨</p>
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+      <h1 class="hero-title">Reliable Hosting with Ntandohost</h1>
+      <p class="hero-subtitle">Your website's home in the cloud. Fast, Secure, and 24/7 Support.</p>
+      <a href="#plans" class="btn btn-buy" style="text-decoration:none;">View Our Plans</a>
+    </section>
 
-    <div class="pair-card">
-      <h2 class="card-title">GET PAIR CODE</h2>
-      <p class="card-description">Enter your WhatsApp number with country code to receive your pairing code</p>
-
-      <div class="form-group">
-        <label for="phone-number">
-          <i class="fas fa-phone"></i> Phone Number
-        </label>
-        <div class="input-wrapper">
-          <i class="fas fa-mobile-alt"></i>
-          <input type="text" id="phone-number" placeholder="e.g., +26378xxx" />
-        </div>
+    <!-- Features -->
+    <section id="features" class="features">
+      <div class="feature-card">
+        <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
+        <div class="feature-title">Secure</div>
+        <div class="feature-desc">Your data is protected with top-tier security measures.</div>
       </div>
-
-      <div class="button-group">
-        <button class="btn" id="generate-code">
-          <i class="fas fa-rocket"></i> Generate Code & Link
-        </button>
-        <button class="btn" id="copy-code" style="display:none;">
-          <i class="fas fa-copy"></i> Copy Code
-        </button>
-        <button class="btn" id="validate-code" style="display:none;">
-          <i class="fas fa-check-circle"></i> Validate Session
-        </button>
+      <div class="feature-card">
+        <div class="feature-icon"><i class="fas fa-rocket"></i></div>
+        <div class="feature-title">Fast</div>
+        <div class="feature-desc">Blazing fast servers to keep your website running smoothly.</div>
       </div>
-
-      <a href="https://whatsapp.com/channel/0029VbBjU8G4Y9lfinrbqS1U" target="_blank" class="whatsapp-btn">
-        <i class="fab fa-whatsapp"></i>
-        Join WhatsApp Channel
-      </a>
-
-      <div class="loading-container" id="loading-spinner">
-        <div class="loader">
-          <div></div><div></div><div></div><div></div>
-          <div></div><div></div><div></div><div></div>
-        </div>
-        <p class="loading-text">Connecting to the moon...</p>
+      <div class="feature-card">
+        <div class="feature-icon"><i class="fas fa-headset"></i></div>
+        <div class="feature-title">24/7 Support</div>
+        <div class="feature-desc">Our support team is here to help you anytime.</div>
       </div>
+    </section>
 
-      <div id="pair"></div>
-    </div>
+    <!-- Hosting Plans -->
+    <section id="plans" class="plans">
+      <div class="plan-card">
+        <div class="plan-title">Basic</div>
+        <div class="plan-price">$5<span style="font-size:1rem;">/mo</span></div>
+        <ul class="plan-features">
+          <li>10 GB SSD Storage</li>
+          <li>1 Domain</li>
+          <li>Basic Support</li>
+        </ul>
+        <button class="btn-buy">Buy Now</button>
+      </div>
+      <div class="plan-card">
+        <div class="plan-title">Pro</div>
+        <div class="plan-price">$15<span style="font-size:1rem;">/mo</span></div>
+        <ul class="plan-features">
+          <li>50 GB SSD Storage</li>
+          <li>5 Domains</li>
+          <li>Priority Support</li>
+        </ul>
+        <button class="btn-buy">Buy Now</button>
+      </div>
+      <div class="plan-card">
+        <div class="plan-title">Premium</div>
+        <div class="plan-price">$30<span style="font-size:1rem;">/mo</span></div>
+        <ul class="plan-features">
+          <li>200 GB SSD Storage</li>
+          <li>Unlimited Domains</li>
+          <li>24/7 Support & Backup</li>
+        </ul>
+        <button class="btn-buy">Buy Now</button>
+      </div>
+    </section>
+
+    <!-- Testimonials Slider -->
+    <section id="testimonials" class="testimonials">
+      <div class="testimonial">"Ntandohost gave me the best hosting experience! Highly recommended." - Jane D.</div>
+      <div class="testimonial">"Excellent support & fast servers. My website runs smoothly." - Mike P.</div>
+      <div class="testimonial">"Affordable plans and great uptime. Love it!" - Sara K.</div>
+    </section>
+
+    <!-- Contact Form -->
+    <section id="contact" class="contact">
+      <h3>Contact Us</h3>
+      <form class="contact-form" id="contactForm">
+        <input type="text" class="contact-input" placeholder="Your Name" required />
+        <input type="email" class="contact-input" placeholder="Your Email" required />
+        <textarea class="contact-input" rows="4" placeholder="Your Message" required></textarea>
+        <button class="contact-btn" type="submit">Send Message</button>
+      </form>
+    </section>
   </div>
 
   <!-- Footer -->
   <footer>
-    &copy; <span id="currentYear"></span> Ntandohost. Powered by <span>Xcoder Tech</span>
+    &copy; <span id="currentYear"></span> Ntandohost. All rights reserved.
+    <div class="footer-social">
+      <a href="#" target="_blank"><i class="fab fa-facebook"></i></a>
+      <a href="#" target="_blank"><i class="fab fa-twitter"></i></a>
+      <a href="#" target="_blank"><i class="fab fa-instagram"></i></a>
+    </div>
   </footer>
 
+  <!-- Scripts for stars, welcome message, contact form -->
   <script>
-    // Create starry night sky
     function createStars() {
       const sky = document.getElementById('night-sky');
-      for (let i = 0; i < 150; i++) {
+      for (let i=0; i<150; i++) {
         const star = document.createElement('div');
-        star.className = 'star';
-        star.style.width = Math.random() * 3 + 'px';
-        star.style.height = star.style.width;
-        star.style.left = Math.random() * 100 + '%';
-        star.style.top = Math.random() * 100 + '%';
-        star.style.animationDelay = Math.random() * 3 + 's';
-        star.style.animationDuration = (Math.random() * 2 + 2) + 's';
+        star.className='star';
+        star.style.width= Math.random()*3 + 'px';
+        star.style.height=star.style.width;
+        star.style.left= Math.random()*100 + '%';
+        star.style.top= Math.random()*100 + '%';
+        star.style.animationDelay= Math.random()*3 + 's';
+        star.style.animationDuration= (Math.random()*2+2)+'s';
         sky.appendChild(star);
       }
     }
     createStars();
 
-    document.getElementById('currentYear').textContent = new Date().getFullYear();
-    
+    document.getElementById('currentYear').textContent=new Date().getFullYear();
+
     document.addEventListener("DOMContentLoaded", () => {
-      swal({
-        title: "Welcome to LADYBUG BOT MD! 🆓",
-        text: "Connect to LADYBUG MD instantly!",
-        icon: "info",
-        button: "Let's Go!",
-      });
+      swal({ title: "Welcome to Ntandohost!", text: "Reliable hosting solutions.", icon: "info", button: "Get Started" });
     });
 
-    const genBtn = document.getElementById('generate-code');
-    const valBtn = document.getElementById('validate-code');
-    const copyBtn = document.getElementById('copy-code');
-    const spinner = document.getElementById('loading-spinner');
-    const pairDiv = document.getElementById('pair');
-    const phoneInput = document.getElementById('phone-number');
-
-    async function copyToClipboard() {
-      const code = copyBtn.dataset.code;
-      try {
-        await navigator.clipboard.writeText(code);
-        copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
-        setTimeout(() => {
-          copyBtn.innerHTML = '<i class="fas fa-copy"></i> Copy Code';
-        }, 2000);
-      } catch (err) {
-        console.error('Copy failed:', err);
-      }
-    }
-
-    genBtn.addEventListener('click', async () => {
-      const num = phoneInput.value.replace(/\D/g, '');
-      if (!num) {
-        pairDiv.innerHTML = '<p style="color: #ff6b6b;">❗ Please enter your WhatsApp number with country code.</p>';
-        return;
-      }
-      
-      spinner.style.display = 'block';
-      pairDiv.innerHTML = '';
-      valBtn.style.display = 'none';
-      copyBtn.style.display = 'none';
-      genBtn.disabled = true;
-      
-      try {
-        phoneInput.value = '+' + num;
-        await new Promise(r => setTimeout(r, 2000));
-        
-        const {data} = await axios.get(`/code?number=${num}`);
-        const code = data.code || '❗ Service Unavailable';
-        const waLink = `https://wa.me/${num}?text=${encodeURIComponent(code)}`;
-        
-        pairDiv.innerHTML = `
-          <p style="margin-bottom: 1rem;">Your Pairing Code:</p>
-          <p><strong>${code}</strong></p>
-          <p style="margin-top: 1rem;">
-            <a href="${waLink}" target="_blank">
-              <i class="fas fa-external-link-alt"></i> Open in WhatsApp
-            </a>
-          </p>
-        `;
-        
-        copyBtn.dataset.code = code;
-        copyBtn.style.display = 'block';
-        valBtn.style.display = 'block';
-      } catch (err) {
-        pairDiv.innerHTML = '<p style="color: #ff6b6b;">❗ Error generating code. Please try again later.</p>';
-      } finally {
-        spinner.style.display = 'none';
-        genBtn.disabled = false;
-      }
-    });
-
-    copyBtn.addEventListener('click', copyToClipboard);
-    valBtn.addEventListener('click', () => window.location.href = '/validate');
-    
-    phoneInput.addEventListener('input', function() {
-      let v = this.value.replace(/\D/g, '');
-      this.value = v ? '+' + v : '';
+    // Basic contact form alert
+    document.getElementById('contactForm').addEventListener('submit', function(e){
+      e.preventDefault();
+      swal("Thank you!", "Your message has been sent.", "success");
+      this.reset();
     });
   </script>
 </body>
-</html>
+</html>>

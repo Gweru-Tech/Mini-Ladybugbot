@@ -1822,8 +1822,8 @@ function setupCommandHandlers(socket, number) {
                     const sources = [
                         async () => {
                             const apiUrl = isYoutubeUrl 
-                                ? `https://izumiiiiiiii.dpdns.org/downloader/youtube?url=${encodeURIComponent(videoInfo.url)}&format=mp3`
-                                : `https://izumiiiiiiii.dpdns.org/downloader/youtube-play?query=${encodeURIComponent(videoInfo.title)}`;
+                                ? `https://apis-keith.vercel.app/download/dlmp3?url=${encodeURIComponent(videoInfo.url)}&format=mp3`
+                                : `https://api.yupra.my.id/api/downloader/ytmp3?url=${encodeURIComponent(videoInfo.title)}`;
                             const res = await tryRequest(() => axios.get(apiUrl, AXIOS_DEFAULTS));
                             if (res?.data?.result?.download) {
                                 return {

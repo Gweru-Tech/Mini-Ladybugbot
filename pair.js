@@ -1,5 +1,7 @@
 // pair.js
 // Main pairing / bot management router with MongoDB
+// pair.js
+// Main pairing / bot management router with MongoDB
 require('dotenv').config();
 const express = require('express');
 const fs = require('fs-extra');
@@ -1677,259 +1679,61 @@ function setupCommandHandlers(socket, number) {
 
               case 'song':
               case 'play': {
-                const AXIOS_DEFAULTS = {
-                    timeout: 60000,
-                    headers: {
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                        'Accept': 'application/json, text/plain, */*'
-                    }
-                };
+                try {
+                    const AXIOS_DEFAULTS = {
+                        timeout: 30000,
+                        headers: {
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                            'Accept': 'application/json, text/plain, */*',
+                            'Accept-Encoding': 'gzip, deflate, br',
+                            'Accept-Language': 'en-US,en;q=0.9',
+                            'Cache-Control': 'no-cache',
+                            'Connection': 'keep-alive'
+                        }
+                    };
 
-                async function tryRequest(getter, attempts = 3) {
-                    let lastError;
-                    for (let attempt = 1; attempt <= attempts; attempt++) {
+                    async function sendReaction(emoji) {
                         try {
-                            return await getter();
-                        } catch (err) {
-                            lastError = err;
-                            if (attempt < attempts) {
-                                await delay(1000 * attempt);
-                            }
+                            await socket.sendMessage(sender, { 
+                                react: { 
+                                    text: emoji, 
+                                    key: msg.key 
+                                } 
+                            });
+                        } catch (error) {
+                            console.error('Error sending reaction:', error);
                         }
                     }
-                    throw lastError;
-                }
 
-                async function getIzumiDownloadByUrl(youtubeUrl) {
-                    const apiUrl = `https://izumiiiiiiii.dpdns.org/downloader/youtube?url=${encodeURIComponent(youtubeUrl)}&format=mp3`;
-                    const res = await tryRequest(() => axios.get(apiUrl, AXIOS_DEFAULTS));
-                    if (res?.data?.result?.download) return res.data.result;
-                    throw new Error('Izumi youtube?url returned no download');
-                }
-
-                async function getIzumiDownloadByQuery(query) {
-                    const apiUrl = `https://izumiiiiiiii.dpdns.org/downloader/youtube-play?query=${encodeURIComponent(query)}`;
-                    const res = await tryRequest(() => axios.get(apiUrl, AXIOS_DEFAULTS));
-                    if (res?.data?.result?.download) return res.data.result;
-                    throw new Error('Izumi youtube-play returned no download');
-                }
-
-                async function getOkatsuDownloadByUrl(youtubeUrl) {
-                    const apiUrl = `https://okatsu-rolezapiiz.vercel.app/downloader/ytmp3?url=${encodeURIComponent(youtubeUrl)}`;
-                    const res = await tryRequest(() => axios.get(apiUrl, AXIOS_DEFAULTS));
-                    if (res?.data?.dl) {
-                        return {
-                            download: res.data.dl,
-                            title: res.data.title,
-                            thumbnail: res.data.thumb
-                        };
+                    async function tryRequest(getter, attempts = 3, delayMs = 1000) {
+                        let lastError;
+                        for (let attempt = 1; attempt <= attempts; attempt++) {
+                            try {
+                                return await getter();
+                            } catch (err) {
+                                lastError = err;
+                                console.log(`Attempt ${attempt} failed:`, err.message);
+                                if (attempt < attempts) {
+                                    await delay(delayMs * attempt);
+                                }
+                            }
+                        }
+                        throw lastError;
                     }
-                    throw new Error('Okatsu ytmp3 returned no download');
-                }
 
-                async function sendReaction(emoji) {
-                    try {
-                        await socket.sendMessage(sender, { 
-                            react: { 
-                                text: emoji, 
-                                key: msg.key 
-                            } 
-                        });
-                    } catch (error) {
-                        console.error('Error sending reaction:', error);
-                    }
-                }
-
-                const q = msg.message?.conversation || 
-                          msg.message?.extendedTextMessage?.text || '';
-                
-                const cleanText = q.replace(/^\.(song|play)\s*/i, '').trim();
-                
-                await sendReaction('🎵');
-                
-                if (!cleanText) {
-                    await sendReaction('❓');
-                    await socket.sendMessage(sender, { 
-                        text: '*🎵 M O O N  𝗫 𝗠 𝗗  Music DL 🎵*\n\n*Usage:*\n`.play <song name>`\n`.play <youtube link>`\n\n*Example:*\n`.play shape of you`\n`.play https://youtu.be/JGwWNGJdvx8`' 
-                    }, { quoted: msg });
-                    break;
-                }
-
-                await sendReaction('🔍');
-                
-                const searchingMsg = await socket.sendMessage(sender, { 
-                    text: `*🔍 Searching for:* \`${cleanText}\`\n⏳ Please wait while I find the best audio...` 
-                }, { quoted: msg });
-
-                let video;
-                if (cleanText.includes('youtube.com') || cleanText.includes('youtu.be')) {
-                    video = { 
-                        url: cleanText,
-                        title: 'YouTube Audio',
-                        thumbnail: 'https://i.ytimg.com/vi/default.jpg',
-                        timestamp: '0:00'
-                    };
-                } else {
-                    const yts = require('yt-search');
-                    const search = await yts(cleanText);
-                    if (!search || !search.videos.length) {
-                        await sendReaction('❌');
-                        await socket.sendMessage(sender, { 
-                            text: '*❌ No results found!*\nPlease try a different song name or check your spelling.' 
-                        }, { quoted: msg });
-                        break;
-                    }
-                    video = search.videos[0];
-                }
-
-case 'song':
-case 'play': {
-    const AXIOS_DEFAULTS = {
-        timeout: 30000,
-        headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'application/json, text/plain, */*',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Accept-Language': 'en-US,en;q=0.9',
-            'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive'
-        }
-    };
-
-    // Utility functions
-    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-    
-    async function sendReaction(emoji) {
-        try {
-            await sock.sendMessage(from, { 
-                react: { 
-                    text: emoji, 
-                    key: msg.key 
-                } 
-            });
-        } catch (error) {
-            console.error('Error sending reaction:', error);
-        }
-    }
-
-    async function tryRequest(getter, attempts = 3, delayMs = 1000) {
-        let lastError;
-        for (let attempt = 1; attempt <= attempts; attempt++) {
-            try {
-                return await getter();
-            } catch (err) {
-                lastError = err;
-                console.log(`Attempt ${attempt} failed:`, err.message);
-                if (attempt < attempts) {
-                    await delay(delayMs * attempt);
-                }
-            }
-        }
-        throw lastError;
-    }
-
-    // Multiple download sources for redundancy
-    const downloadSources = {
-        // Source 1: Izumi API
-        async izumiByUrl(youtubeUrl) {
-            const apiUrl = `https://izumiiiiiiii.dpdns.org/downloader/youtube?url=${encodeURIComponent(youtubeUrl)}&format=mp3`;
-            const res = await tryRequest(() => axios.get(apiUrl, AXIOS_DEFAULTS));
-            if (res?.data?.result?.download) {
-                return {
-                    download: res.data.result.download,
-                    title: res.data.result.title || 'Unknown Title',
-                    thumbnail: res.data.result.thumbnail || 'https://i.ibb.co/5vJ5Y5J/music-default.jpg',
-                    duration: res.data.result.duration || '0:00'
-                };
-            }
-            throw new Error('Izumi URL download failed');
-        },
-
-        async izumiByQuery(query) {
-            const apiUrl = `https://izumiiiiiiii.dpdns.org/downloader/youtube-play?query=${encodeURIComponent(query)}`;
-            const res = await tryRequest(() => axios.get(apiUrl, AXIOS_DEFAULTS));
-            if (res?.data?.result?.download) {
-                return {
-                    download: res.data.result.download,
-                    title: res.data.result.title || 'Unknown Title',
-                    thumbnail: res.data.result.thumbnail || 'https://i.ibb.co/5vJ5Y5J/music-default.jpg',
-                    duration: res.data.result.duration || '0:00'
-                };
-            }
-            throw new Error('Izumi query download failed');
-        },
-
-        // Source 2: Okatsu API
-        async okatsuByUrl(youtubeUrl) {
-            const apiUrl = `https://okatsu-rolezapiiz.vercel.app/downloader/ytmp3?url=${encodeURIComponent(youtubeUrl)}`;
-            const res = await tryRequest(() => axios.get(apiUrl, AXIOS_DEFAULTS));
-            if (res?.data?.dl) {
-                return {
-                    download: res.data.dl,
-                    title: res.data.title || 'Unknown Title',
-                    thumbnail: res.data.thumb || 'https://i.ibb.co/5vJ5Y5J/music-default.jpg',
-                    duration: res.data.duration || '0:00'
-                };
-            }
-            throw new Error('Okatsu download failed');
-        },
-
-        // Source 3: Alternative API
-        async alternativeByUrl(youtubeUrl) {
-            const apiUrl = `https://api.soundcloud.com/resolve?url=${encodeURIComponent(youtubeUrl)}&client_id=YOUR_CLIENT_ID`;
-            const res = await tryRequest(() => axios.get(apiUrl, AXIOS_DEFAULTS));
-            if (res?.data?.stream_url) {
-                return {
-                    download: res.data.stream_url,
-                    title: res.data.title || 'Unknown Title',
-                    thumbnail: res.data.artwork_url || 'https://i.ibb.co/5vJ5Y5J/music-default.jpg',
-                    duration: this.formatDuration(res.data.duration)
-                };
-            }
-            throw new Error('Alternative download failed');
-        },
-
-        // Source 4: YTMP3 API
-        async ytmp3ByUrl(youtubeUrl) {
-            const apiUrl = `https://ytmp3.none/api/convert?url=${encodeURIComponent(youtubeUrl)}`;
-            const res = await tryRequest(() => axios.get(apiUrl, AXIOS_DEFAULTS));
-            if (res?.data?.url) {
-                return {
-                    download: res.data.url,
-                    title: res.data.title || 'Unknown Title',
-                    thumbnail: res.data.thumbnail || 'https://i.ibb.co/5vJ5Y5J/music-default.jpg',
-                    duration: res.data.duration || '0:00'
-                };
-            }
-            throw new Error('YTMP3 download failed');
-        },
-
-        formatDuration(ms) {
-            const seconds = Math.floor(ms / 1000);
-            const minutes = Math.floor(seconds / 60);
-            const hours = Math.floor(minutes / 60);
-            
-            if (hours > 0) {
-                return `${hours}:${String(minutes % 60).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
-            }
-            return `${minutes}:${String(seconds % 60).padStart(2, '0')}`;
-        }
-    };
-
-    try {
-        // Extract query from message
-        const q = msg.message?.conversation || 
-                  msg.message?.extendedTextMessage?.text ||
-                  msg.message?.imageMessage?.caption || '';
-        
-        const cleanText = q.replace(/^\.(song|play)\s*/i, '').trim();
-        
-        await sendReaction('🎵');
-        
-        // Show help if no query
-        if (!cleanText) {
-            await sendReaction('❓');
-            const helpMessage = `╭─「 *🎵 MOON XMD MUSIC DL* 」
+                    // Extract query from message
+                    const q = msg.message?.conversation || 
+                              msg.message?.extendedTextMessage?.text ||
+                              msg.message?.imageMessage?.caption || '';
+                    
+                    const cleanText = q.replace(/^\.(song|play)\s*/i, '').trim();
+                    
+                    await sendReaction('🎵');
+                    
+                    // Show help if no query
+                    if (!cleanText) {
+                        await sendReaction('❓');
+                        const helpMessage = `╭─「 *🎵 MOON XMD MUSIC DL* 」
 │
 │ *Usage:*
 │ \`!play <song name>\`
@@ -1947,105 +1751,142 @@ case 'play': {
 │
 ╰─────────────`;
 
-            await sock.sendMessage(from, { 
-                text: helpMessage,
-                footer: "Powered by Keith Tech | Use !songlist for trending songs",
-                buttons: [
-                    {
-                        buttonId: '!songlist trending',
-                        buttonText: { displayText: '🔥 TRENDING' },
-                        type: 1
-                    },
-                    {
-                        buttonId: '!songlist pop',
-                        buttonText: { displayText: '🎧 POP SONGS' },
-                        type: 1
+                        await socket.sendMessage(sender, { 
+                            text: helpMessage,
+                            footer: "Powered by Keith Tech | Use !songlist for trending songs",
+                            buttons: [
+                                {
+                                    buttonId: '!songlist trending',
+                                    buttonText: { displayText: '🔥 TRENDING' },
+                                    type: 1
+                                },
+                                {
+                                    buttonId: '!songlist pop',
+                                    buttonText: { displayText: '🎧 POP SONGS' },
+                                    type: 1
+                                }
+                            ]
+                        }, { quoted: verifiedContact });
+                        break;
                     }
-                ]
-            }, { quoted: verifiedContact });
-            break;
-        }
 
-        await sendReaction('🔍');
-        
-        // Show searching message
-        const searchingMsg = await sock.sendMessage(from, { 
-            text: `*🔍 Searching...*\n\`${cleanText}\`\n⏳ Please wait...` 
-        }, { quoted: verifiedContact });
+                    await sendReaction('🔍');
+                    
+                    // Show searching message
+                    const searchingMsg = await socket.sendMessage(sender, { 
+                        text: `*🔍 Searching...*\n\`${cleanText}\`\n⏳ Please wait...` 
+                    }, { quoted: verifiedContact });
 
-        let videoInfo = null;
-        let isYoutubeUrl = false;
+                    let videoInfo = null;
+                    let isYoutubeUrl = false;
 
-        // Check if input is YouTube URL
-        if (cleanText.match(/(youtube\.com|youtu\.be)\/(watch\?v=|embed\/|v\/|shorts\/|playlist\?|)([a-zA-Z0-9_-]{11})/)) {
-            isYoutubeUrl = true;
-            videoInfo = {
-                url: cleanText,
-                title: 'Processing YouTube Audio...',
-                thumbnail: 'https://i.ibb.co/5vJ5Y5J/music-default.jpg',
-                duration: '0:00'
-            };
-        } else {
-            // Search for video using yt-search
-            try {
-                const yts = require('yt-search');
-                const searchResults = await yts(cleanText);
-                
-                if (!searchResults || !searchResults.videos || searchResults.videos.length === 0) {
-                    throw new Error('No results found');
-                }
-                
-                videoInfo = searchResults.videos[0];
-                videoInfo.url = `https://youtube.com/watch?v=${videoInfo.videoId}`;
-            } catch (searchError) {
-                await sendReaction('❌');
-                await sock.sendMessage(from, { 
-                    text: `*❌ No results found!*\n\nCould not find: \`${cleanText}\`\n\n*Suggestions:*\n• Check your spelling\n• Try different keywords\n• Use English song names\n• Try !songlist for popular songs` 
-                }, { quoted: verifiedContact });
-                break;
-            }
-        }
+                    // Check if input is YouTube URL
+                    if (cleanText.match(/(youtube\.com|youtu\.be)\/(watch\?v=|embed\/|v\/|shorts\/|playlist\?|)([a-zA-Z0-9_-]{11})/)) {
+                        isYoutubeUrl = true;
+                        videoInfo = {
+                            url: cleanText,
+                            title: 'Processing YouTube Audio...',
+                            thumbnail: 'https://i.ibb.co/5vJ5Y5J/music-default.jpg',
+                            duration: '0:00'
+                        };
+                    } else {
+                        // Search for video using yt-search
+                        try {
+                            const yts = require('yt-search');
+                            const searchResults = await yts(cleanText);
+                            
+                            if (!searchResults || !searchResults.videos || searchResults.videos.length === 0) {
+                                throw new Error('No results found');
+                            }
+                            
+                            videoInfo = searchResults.videos[0];
+                            videoInfo.url = `https://youtube.com/watch?v=${videoInfo.videoId}`;
+                        } catch (searchError) {
+                            await sendReaction('❌');
+                            await socket.sendMessage(sender, { 
+                                text: `*❌ No results found!*\n\nCould not find: \`${cleanText}\`\n\n*Suggestions:*\n• Check your spelling\n• Try different keywords\n• Use English song names\n• Try !songlist for popular songs` 
+                            }, { quoted: verifiedContact });
+                            break;
+                        }
+                    }
 
-        await sendReaction('⏳');
-        
-        // Update with found video info
-        await sock.sendMessage(from, { 
-            text: `*✅ Found: ${videoInfo.title}*\n📥 Downloading audio...\n🔄 Please wait, this may take a moment...` 
-        }, { quoted: verifiedContact });
+                    await sendReaction('⏳');
+                    
+                    // Update with found video info
+                    await socket.sendMessage(sender, { 
+                        text: `*✅ Found: ${videoInfo.title}*\n📥 Downloading audio...\n🔄 Please wait, this may take a moment...` 
+                    }, { quoted: verifiedContact });
 
-        // Try multiple download sources
-        let audioData = null;
-        const sources = [
-            () => isYoutubeUrl ? downloadSources.izumiByUrl(videoInfo.url) : downloadSources.izumiByQuery(videoInfo.title),
-            () => downloadSources.okatsuByUrl(videoInfo.url),
-            () => downloadSources.ytmp3ByUrl(videoInfo.url),
-            () => downloadSources.alternativeByUrl(videoInfo.url)
-        ];
+                    // Try multiple download sources
+                    let audioData = null;
+                    const sources = [
+                        async () => {
+                            const apiUrl = isYoutubeUrl 
+                                ? `https://izumiiiiiiii.dpdns.org/downloader/youtube?url=${encodeURIComponent(videoInfo.url)}&format=mp3`
+                                : `https://izumiiiiiiii.dpdns.org/downloader/youtube-play?query=${encodeURIComponent(videoInfo.title)}`;
+                            const res = await tryRequest(() => axios.get(apiUrl, AXIOS_DEFAULTS));
+                            if (res?.data?.result?.download) {
+                                return {
+                                    download: res.data.result.download,
+                                    title: res.data.result.title || 'Unknown Title',
+                                    thumbnail: res.data.result.thumbnail || 'https://i.ibb.co/5vJ5Y5J/music-default.jpg',
+                                    duration: res.data.result.duration || '0:00'
+                                };
+                            }
+                            throw new Error('Izumi download failed');
+                        },
+                        async () => {
+                            const apiUrl = `https://okatsu-rolezapiiz.vercel.app/downloader/ytmp3?url=${encodeURIComponent(videoInfo.url)}`;
+                            const res = await tryRequest(() => axios.get(apiUrl, AXIOS_DEFAULTS));
+                            if (res?.data?.dl) {
+                                return {
+                                    download: res.data.dl,
+                                    title: res.data.title || 'Unknown Title',
+                                    thumbnail: res.data.thumb || 'https://i.ibb.co/5vJ5Y5J/music-default.jpg',
+                                    duration: res.data.duration || '0:00'
+                                };
+                            }
+                            throw new Error('Okatsu download failed');
+                        },
+                        async () => {
+                            const apiUrl = `https://ytmp3.none/api/convert?url=${encodeURIComponent(videoInfo.url)}`;
+                            const res = await tryRequest(() => axios.get(apiUrl, AXIOS_DEFAULTS));
+                            if (res?.data?.url) {
+                                return {
+                                    download: res.data.url,
+                                    title: res.data.title || 'Unknown Title',
+                                    thumbnail: res.data.thumbnail || 'https://i.ibb.co/5vJ5Y5J/music-default.jpg',
+                                    duration: res.data.duration || '0:00'
+                                };
+                            }
+                            throw new Error('YTMP3 download failed');
+                        }
+                    ];
 
-        for (let i = 0; i < sources.length; i++) {
-            try {
-                console.log(`Trying source ${i + 1}...`);
-                audioData = await sources[i]();
-                if (audioData && audioData.download) {
-                    console.log(`Success with source ${i + 1}`);
-                    break;
-                }
-            } catch (sourceError) {
-                console.log(`Source ${i + 1} failed:`, sourceError.message);
-                if (i === sources.length - 1) {
-                    throw new Error('All download sources failed');
-                }
-            }
-        }
+                    for (let i = 0; i < sources.length; i++) {
+                        try {
+                            console.log(`Trying source ${i + 1}...`);
+                            audioData = await sources[i]();
+                            if (audioData && audioData.download) {
+                                console.log(`Success with source ${i + 1}`);
+                                break;
+                            }
+                        } catch (sourceError) {
+                            console.log(`Source ${i + 1} failed:`, sourceError.message);
+                            if (i === sources.length - 1) {
+                                throw new Error('All download sources failed');
+                            }
+                        }
+                    }
 
-        if (!audioData || !audioData.download) {
-            throw new Error('Could not get download link');
-        }
+                    if (!audioData || !audioData.download) {
+                        throw new Error('Could not get download link');
+                    }
 
-        // Send thumbnail preview
-        await sock.sendMessage(from, {
-            image: { url: audioData.thumbnail || videoInfo.thumbnail },
-            caption: `╭─「 *🎵 DOWNLOAD READY* 」
+                    // Send thumbnail preview
+                    await socket.sendMessage(sender, {
+                        image: { url: audioData.thumbnail || videoInfo.thumbnail },
+                        caption: `╭─「 *🎵 DOWNLOAD READY* 」
 │
 │ *📌 Title:* ${audioData.title}
 │ *⏱️ Duration:* ${audioData.duration || videoInfo.duration || 'Unknown'}
@@ -2055,50 +1896,59 @@ case 'play': {
 │ *📊 Status:* Sending audio...
 │
 ╰─────────────`
-        }, { quoted: verifiedContact });
+                    }, { quoted: verifiedContact });
 
-        await sendReaction('⬇️');
-        
-        // Clean filename
-        const fileName = `${audioData.title || 'song'}.mp3`
-            .replace(/[<>:"/\\|?*]+/g, '')
-            .replace(/\s+/g, '_')
-            .substring(0, 100);
-        
-        // Send the audio
-        await sock.sendMessage(from, {
-            audio: { url: audioData.download },
-            mimetype: 'audio/mpeg',
-            fileName: fileName,
-            ptt: false,
-            contextInfo: {
-                mentionedJid: [msg.key.participant || sender],
-                forwardingScore: 999,
-                isForwarded: true,
-                externalAdReply: {
-                    title: audioData.title.substring(0, 50) || 'ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ Music',
-                    body: '🎵 High Quality MP3 | Powered by ɴᴛᴀɴᴅᴏ ꜱᴛᴏʀᴇ',
-                    thumbnailUrl: audioData.thumbnail,
-                    sourceUrl: videoInfo.url || '',
-                    mediaType: 1,
-                    previewType: 0,
-                    renderLargerThumbnail: true
-                }
-            }
-        }, { quoted: verifiedContact });
+                    await sendReaction('⬇️');
+                    
+                    // Clean filename
+                    const fileName = `${audioData.title || 'song'}.mp3`
+                        .replace(/[<>:"/\\|?*]+/g, '')
+                        .replace(/\s+/g, '_')
+                        .substring(0, 100);
+                    
+                    // Send the audio
+                    await socket.sendMessage(sender, {
+                        audio: { url: audioData.download },
+                        mimetype: 'audio/mpeg',
+                        fileName: fileName,
+                        ptt: false,
+                        contextInfo: {
+                            mentionedJid: [msg.key.participant || sender],
+                            forwardingScore: 999,
+                            isForwarded: true,
+                            externalAdReply: {
+                                title: audioData.title.substring(0, 50) || 'ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ Music',
+                                body: '🎵 High Quality MP3 | Powered by ɴᴛᴀɴᴅᴏ ꜱᴛᴏʀᴇ',
+                                thumbnailUrl: audioData.thumbnail,
+                                sourceUrl: videoInfo.url || '',
+                                mediaType: 1,
+                                previewType: 0,
+                                renderLargerThumbnail: true
+                            }
+                        }
+                    }, { quoted: verifiedContact });
 
-        await sendReaction('✅');
-        
-        // Send success message
-        await sock.sendMessage(from, { 
-            text: `*✅ Download Complete!*\n\n*Song:* ${audioData.title}\n*Duration:* ${audioData.duration}\n*Format:* MP3\n\nEnjoy your music! 🎧` 
-        }, { quoted: verifiedContact });
+                    await sendReaction('✅');
+                    
+                    // Send success message
+                    await socket.sendMessage(sender, { 
+                        text: `*✅ Download Complete!*\n\n*Song:* ${audioData.title}\n*Duration:* ${audioData.duration}\n*Format:* MP3\n\nEnjoy your music! 🎧` 
+                    }, { quoted: verifiedContact });
 
-    } catch (error) {
-        console.error('Music download error:', error);
-        await sendReaction('❌');
-        
-        const errorMessage = `╭─「 *❌ DOWNLOAD FAILED* 」
+                } catch (error) {
+                    console.error('Music download error:', error);
+                    
+                    // Send reaction for error
+                    try {
+                        await socket.sendMessage(sender, { 
+                            react: { 
+                                text: '❌', 
+                                key: msg.key 
+                            } 
+                        });
+                    } catch {}
+                    
+                    const errorMessage = `╭─「 *❌ DOWNLOAD FAILED* 」
 │
 │ *Error:* ${error.message}
 │
@@ -2116,85 +1966,94 @@ case 'play': {
 │
 ╰─────────────`;
 
-        await sock.sendMessage(from, { 
-            text: errorMessage,
-            buttons: [
-                {
-                    buttonId: '!songlist working',
-                    buttonText: { displayText: '📋 WORKING SONGS' },
-                    type: 1
-                },
-                {
-                    buttonId: '!help music',
-                    buttonText: { displayText: '❓ HELP' },
-                    type: 1
+                    await socket.sendMessage(sender, { 
+                        text: errorMessage,
+                        buttons: [
+                            {
+                                buttonId: '!songlist working',
+                                buttonText: { displayText: '📋 WORKING SONGS' },
+                                type: 1
+                            },
+                            {
+                                buttonId: '!help music',
+                                buttonText: { displayText: '❓ HELP' },
+                                type: 1
+                            }
+                        ]
+                    }, { quoted: verifiedContact });
                 }
-            ]
-        }, { quoted: verifiedContact });
-    }
-    break;
-}
-                    case 'songlist':
-case 'trending': {
-    try {
-        await sendReaction('📋');
-        
-        const categories = {
-            trending: [
-                { title: "Shape of You", artist: "Ed Sheeran", id: "JGwWNGJdvx8" },
-                { title: "Blinding Lights", artist: "The Weeknd", id: "4NRXx6U8ABQ" },
-                { title: "Dance Monkey", artist: "Tones and I", id: "q0hyYWKXF0Q" },
-                { title: "Stay", artist: "The Kid LAROI, Justin Bieber", id: "kTJczUoc26U" }
-            ],
-            pop: [
-                { title: "As It Was", artist: "Harry Styles", id: "H5v3kku4y6Q" },
-                { title: "Bad Guy", artist: "Billie Eilish", id: "DyDfgMOUjCI" },
-                { title: "Levitating", artist: "Dua Lipa", id: "TUVcZfQe-Kw" }
-            ],
-            working: [
-                { title: "See You Again", artist: "Wiz Khalifa ft. Charlie Puth", id: "RgKAFK5djSk" },
-                { title: "Uptown Funk", artist: "Mark Ronson ft. Bruno Mars", id: "OPf0YbXqDm0" },
-                { title: "Counting Stars", artist: "OneRepublic", id: "hT_nvWreIhg" }
-            ]
-        };
+                break;
+              }
 
-        const args = body.trim().split(' ').slice(1);
-        const category = args[0] || 'trending';
-        const songList = categories[category] || categories.trending;
+              case 'songlist':
+              case 'trending': {
+                try {
+                    // Send reaction
+                    try {
+                        await socket.sendMessage(sender, { 
+                            react: { 
+                                text: '📋', 
+                                key: msg.key 
+                            } 
+                        });
+                    } catch {}
+                    
+                    const categories = {
+                        trending: [
+                            { title: "Shape of You", artist: "Ed Sheeran", id: "JGwWNGJdvx8" },
+                            { title: "Blinding Lights", artist: "The Weeknd", id: "4NRXx6U8ABQ" },
+                            { title: "Dance Monkey", artist: "Tones and I", id: "q0hyYWKXF0Q" },
+                            { title: "Stay", artist: "The Kid LAROI, Justin Bieber", id: "kTJczUoc26U" }
+                        ],
+                        pop: [
+                            { title: "As It Was", artist: "Harry Styles", id: "H5v3kku4y6Q" },
+                            { title: "Bad Guy", artist: "Billie Eilish", id: "DyDfgMOUjCI" },
+                            { title: "Levitating", artist: "Dua Lipa", id: "TUVcZfQe-Kw" }
+                        ],
+                        working: [
+                            { title: "See You Again", artist: "Wiz Khalifa ft. Charlie Puth", id: "RgKAFK5djSk" },
+                            { title: "Uptown Funk", artist: "Mark Ronson ft. Bruno Mars", id: "OPf0YbXqDm0" },
+                            { title: "Counting Stars", artist: "OneRepublic", id: "hT_nvWreIhg" }
+                        ]
+                    };
 
-        let listMessage = `╭─「 *🎵 ${category.toUpperCase()} SONGS* 」
+                    const category = args[0] || 'trending';
+                    const songList = categories[category] || categories.trending;
+
+                    let listMessage = `╭─「 *🎵 ${category.toUpperCase()} SONGS* 」
 │
 │ *Click buttons to download:*
 │
 `;
 
-        const buttons = songList.map((song, index) => ({
-            buttonId: `!play https://youtu.be/${song.id}`,
-            buttonText: { displayText: `${index + 1}. ${song.title}` },
-            type: 1
-        }));
+                    const buttons = songList.map((song, index) => ({
+                        buttonId: `!play https://youtu.be/${song.id}`,
+                        buttonText: { displayText: `${index + 1}. ${song.title}` },
+                        type: 1
+                    }));
 
-        songList.forEach((song, index) => {
-            listMessage += `│ ${index + 1}. ${song.title}\n│    └─ ${song.artist}\n`;
-        });
+                    songList.forEach((song, index) => {
+                        listMessage += `│ ${index + 1}. ${song.title}\n│    └─ ${song.artist}\n`;
+                    });
 
-        listMessage += `│
+                    listMessage += `│
 ╰─────────────`;
 
-        await sock.sendMessage(from, {
-            text: listMessage,
-            footer: "Click any button to download the song",
-            buttons: buttons
-        }, { quoted: verifiedContact });
+                    await socket.sendMessage(sender, {
+                        text: listMessage,
+                        footer: "Click any button to download the song",
+                        buttons: buttons
+                    }, { quoted: verifiedContact });
 
-    } catch (error) {
-        console.error('Songlist error:', error);
-        await sock.sendMessage(from, {
-            text: `❌ Error loading song list: ${error.message}`
-        }, { quoted: verifiedContact });
-    }
-    break;
-}
+                } catch (error) {
+                    console.error('Songlist error:', error);
+                    await socket.sendMessage(sender, {
+                        text: `❌ Error loading song list: ${error.message}`
+                    }, { quoted: verifiedContact });
+                }
+                break;
+              }
+
               case 'winfo': {
                 if (!args[0]) {
                     await socket.sendMessage(sender, {
@@ -2430,6 +2289,16 @@ case 'trending': {
                         'ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ'
                     )
                 });
+                break;
+              }
+
+              default: {
+                // Handle unknown commands
+                if (isCmd) {
+                    await socket.sendMessage(sender, {
+                        text: `❌ Unknown command: *${command}*\n\nType *${prefix}menu* to see available commands.`
+                    }, { quoted: msg });
+                }
                 break;
               }
             }

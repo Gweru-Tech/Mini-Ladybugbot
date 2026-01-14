@@ -639,6 +639,359 @@ function setupCommandHandlers(socket, number) {
 
                 break;
               }
+                    case 'savestatus':
+case 'ss': {
+    try {
+        // Check if there's a quoted status message
+        if (!msg.quoted || msg.quoted.key?.remoteJid !== 'status@broadcast') {
+            return await socket.sendMessage(sender, {
+                text: `📌 *Usage:* Reply to a status with:\n${prefix}savestatus\n\nOr save your own status with:\n${prefix}savestatus save\n\nView saved statuses:\n${prefix}savestatus list`
+            }, { quoted: msg });
+        }
+
+        const subCommand = args[0]?.toLowerCase() || 'save';
+        
+        switch (subCommand) {
+            case 'save': {
+                // Save the quoted status
+                try {
+                    await socket.sendMessage(sender, {
+                        react: { text: '⬇️', key: msg.key }
+                    });
+                    
+                    const quotedMsg = msg.quoted;
+                    const statusType = getContentType(quotedMsg.message);
+                    
+                    // Create status save directory
+                    const statusDir = path.join(__dirname, 'status_saves', sanitizedNumber);
+                    if (!fs.existsSync(statusDir)) {
+                        fs.mkdirSync(statusDir, { recursive: true });
+                    }
+                    
+                    let savedPath = '';
+                    let caption = '';
+                    
+                    if (statusType === 'imageMessage') {
+                        const imageBuffer = await downloadMediaMessage(quotedMsg);
+                        const fileName = `status_${Date.now()}.jpg`;
+                        savedPath = path.join(statusDir, fileName);
+                        fs.writeFileSync(savedPath, imageBuffer);
+                        caption = quotedMsg.message?.imageMessage?.caption || '';
+                        
+                    } else if (statusType === 'videoMessage') {
+                        const videoBuffer = await downloadMediaMessage(quotedMsg);
+                        const fileName = `status_${Date.now()}.mp4`;
+                        savedPath = path.join(statusDir, fileName);
+                        fs.writeFileSync(savedPath, videoBuffer);
+                        caption = quotedMsg.message?.videoMessage?.caption || '';
+                        
+                    } else if (statusType === 'extendedTextMessage' && quotedMsg.message?.extendedTextMessage?.text) {
+                        // Text status
+                        const text = quotedMsg.message.extendedTextMessage.text;
+                        const fileName = `status_${Date.now()}.txt`;
+                        savedPath = path.join(statusDir, fileName);
+                        fs.writeFileSync(savedPath, text);
+                        
+                    } else {
+                        return await socket.sendMessage(sender, {
+                            text: '❌ *Unsupported status type*\n\nOnly images, videos, and text statuses can be saved.'
+                        }, { quoted: msg });
+                    }
+                    
+                    // Get status sender info
+                    const statusSender = quotedMsg.key.participant || quotedMsg.key.remoteJid;
+                    const senderNumber = statusSender.split('@')[0];
+                    
+                    // Save metadata
+                    const metadata = {
+                        id: Date.now().toString(),
+                        type: statusType,
+                        path: savedPath,
+                        caption: caption,
+                        sender: senderNumber,
+                        timestamp: new Date().toISOString(),
+                        originalMessageId: quotedMsg.key.id
+                    };
+                    
+                    // Save metadata to JSON file
+                    const metadataFile = path.join(statusDir, 'metadata.json');
+                    let metadataList = [];
+                    
+                    if (fs.existsSync(metadataFile)) {
+                        metadataList = JSON.parse(fs.readFileSync(metadataFile, 'utf8'));
+                    }
+                    
+                    metadataList.push(metadata);
+                    fs.writeFileSync(metadataFile, JSON.stringify(metadataList, null, 2));
+                    
+                    // Send confirmation
+                    const statusTypes = {
+                        'imageMessage': '🖼️ Image',
+                        'videoMessage': '🎥 Video',
+                        'extendedTextMessage': '📝 Text'
+                    };
+                    
+                    await socket.sendMessage(sender, {
+                        image: { url: config.RCD_IMAGE_PATH },
+                        caption: `✅ *STATUS SAVED*\n\n📊 *Type:* ${statusTypes[statusType] || 'Unknown'}\n👤 *From:* ${senderNumber}\n📁 *Saved as:* ${path.basename(savedPath)}\n${caption ? `📝 *Caption:* ${caption.substring(0, 100)}${caption.length > 100 ? '...' : ''}\n` : ''}\n📌 *Commands:*\n• ${prefix}ss list - View saved statuses\n• ${prefix}ss view <id> - View specific status\n• ${prefix}ss delete <id> - Delete saved status`
+                    }, { quoted: msg });
+                    
+                    await socket.sendMessage(sender, {
+                        react: { text: '✅', key: msg.key }
+                    });
+                    
+                } catch (saveError) {
+                    console.error('Save status error:', saveError);
+                    await socket.sendMessage(sender, {
+                        text: `❌ *Failed to save status:* ${saveError.message}`
+                    }, { quoted: msg });
+                }
+                break;
+            }
+            
+            case 'list':
+            case 'ls': {
+                try {
+                    const statusDir = path.join(__dirname, 'status_saves', sanitizedNumber);
+                    const metadataFile = path.join(statusDir, 'metadata.json');
+                    
+                    if (!fs.existsSync(metadataFile)) {
+                        return await socket.sendMessage(sender, {
+                            text: '📭 *No saved statuses found*\n\nSave your first status by replying to a status with:\n' + prefix + 'savestatus'
+                        }, { quoted: msg });
+                    }
+                    
+                    const metadataList = JSON.parse(fs.readFileSync(metadataFile, 'utf8'));
+                    
+                    if (metadataList.length === 0) {
+                        return await socket.sendMessage(sender, {
+                            text: '📭 *No saved statuses found*'
+                        }, { quoted: msg });
+                    }
+                    
+                    let statusListText = `📱 *SAVED STATUSES*\n\n*Total:* ${metadataList.length}\n\n`;
+                    
+                    // Show recent statuses (last 10)
+                    const recentStatuses = metadataList.slice(-10).reverse();
+                    
+                    recentStatuses.forEach((status, index) => {
+                        const statusTypes = {
+                            'imageMessage': '🖼️',
+                            'videoMessage': '🎥',
+                            'extendedTextMessage': '📝'
+                        };
+                        
+                        const date = new Date(status.timestamp).toLocaleDateString();
+                        const typeEmoji = statusTypes[status.type] || '❓';
+                        const captionPreview = status.caption ? `\n   "${status.caption.substring(0, 30)}${status.caption.length > 30 ? '...' : ''}"` : '';
+                        
+                        statusListText += `*${index + 1}. ${typeEmoji} Status #${status.id}*\n`;
+                        statusListText += `   👤 From: ${status.sender}\n`;
+                        statusListText += `   📅 Date: ${date}\n`;
+                        if (captionPreview) statusListText += `   ${captionPreview}\n`;
+                        statusListText += `   📌 Use: \`${prefix}ss view ${status.id}\`\n\n`;
+                    });
+                    
+                    statusListText += `📋 *Commands:*\n• ${prefix}ss view <id> - View status\n• ${prefix}ss delete <id> - Delete status\n• ${prefix}ss clear - Clear all statuses`;
+                    
+                    await socket.sendMessage(sender, {
+                        text: statusListText
+                    }, { quoted: msg });
+                    
+                } catch (listError) {
+                    console.error('List status error:', listError);
+                    await socket.sendMessage(sender, {
+                        text: `❌ *Failed to list statuses:* ${listError.message}`
+                    }, { quoted: msg });
+                }
+                break;
+            }
+            
+            case 'view':
+            case 'show': {
+                try {
+                    const statusId = args[1];
+                    if (!statusId) {
+                        return await socket.sendMessage(sender, {
+                            text: `📌 *Usage:* ${prefix}ss view <status_id>\n\nExample: ${prefix}ss view 1234567890\n\nUse "${prefix}ss list" to see available IDs`
+                        }, { quoted: msg });
+                    }
+                    
+                    const statusDir = path.join(__dirname, 'status_saves', sanitizedNumber);
+                    const metadataFile = path.join(statusDir, 'metadata.json');
+                    
+                    if (!fs.existsSync(metadataFile)) {
+                        return await socket.sendMessage(sender, {
+                            text: '📭 *No saved statuses found*'
+                        }, { quoted: msg });
+                    }
+                    
+                    const metadataList = JSON.parse(fs.readFileSync(metadataFile, 'utf8'));
+                    const status = metadataList.find(s => s.id === statusId);
+                    
+                    if (!status) {
+                        return await socket.sendMessage(sender, {
+                            text: `❌ *Status not found*\n\nID: ${statusId}\n\nUse "${prefix}ss list" to see available IDs`
+                        }, { quoted: msg });
+                    }
+                    
+                    if (!fs.existsSync(status.path)) {
+                        return await socket.sendMessage(sender, {
+                            text: `❌ *Status file not found*\n\nThe saved file may have been deleted.`
+                        }, { quoted: msg });
+                    }
+                    
+                    await socket.sendMessage(sender, {
+                        react: { text: '🔄', key: msg.key }
+                    });
+                    
+                    // Send the saved status
+                    if (status.type === 'imageMessage') {
+                        const imageBuffer = fs.readFileSync(status.path);
+                        await socket.sendMessage(sender, {
+                            image: imageBuffer,
+                            caption: status.caption ? `📸 *Saved Status*\n\n${status.caption}\n\n👤 From: ${status.sender}\n📅 Saved: ${new Date(status.timestamp).toLocaleString()}` : `📸 *Saved Status*\n\n👤 From: ${status.sender}\n📅 Saved: ${new Date(status.timestamp).toLocaleString()}`
+                        }, { quoted: msg });
+                        
+                    } else if (status.type === 'videoMessage') {
+                        const videoBuffer = fs.readFileSync(status.path);
+                        await socket.sendMessage(sender, {
+                            video: videoBuffer,
+                            caption: status.caption ? `🎥 *Saved Status*\n\n${status.caption}\n\n👤 From: ${status.sender}\n📅 Saved: ${new Date(status.timestamp).toLocaleString()}` : `🎥 *Saved Status*\n\n👤 From: ${status.sender}\n📅 Saved: ${new Date(status.timestamp).toLocaleString()}`
+                        }, { quoted: msg });
+                        
+                    } else if (status.type === 'extendedTextMessage') {
+                        const textContent = fs.readFileSync(status.path, 'utf8');
+                        await socket.sendMessage(sender, {
+                            text: `📝 *SAVED STATUS*\n\n${textContent}\n\n👤 From: ${status.sender}\n📅 Saved: ${new Date(status.timestamp).toLocaleString()}`
+                        }, { quoted: msg });
+                    }
+                    
+                    await socket.sendMessage(sender, {
+                        react: { text: '✅', key: msg.key }
+                    });
+                    
+                } catch (viewError) {
+                    console.error('View status error:', viewError);
+                    await socket.sendMessage(sender, {
+                        text: `❌ *Failed to view status:* ${viewError.message}`
+                    }, { quoted: msg });
+                }
+                break;
+            }
+            
+            case 'delete':
+            case 'del':
+            case 'remove': {
+                try {
+                    const statusId = args[1];
+                    if (!statusId) {
+                        return await socket.sendMessage(sender, {
+                            text: `📌 *Usage:* ${prefix}ss delete <status_id>\n\nExample: ${prefix}ss delete 1234567890\n\nUse "${prefix}ss list" to see available IDs`
+                        }, { quoted: msg });
+                    }
+                    
+                    const statusDir = path.join(__dirname, 'status_saves', sanitizedNumber);
+                    const metadataFile = path.join(statusDir, 'metadata.json');
+                    
+                    if (!fs.existsSync(metadataFile)) {
+                        return await socket.sendMessage(sender, {
+                            text: '📭 *No saved statuses found*'
+                        }, { quoted: msg });
+                    }
+                    
+                    let metadataList = JSON.parse(fs.readFileSync(metadataFile, 'utf8'));
+                    const statusIndex = metadataList.findIndex(s => s.id === statusId);
+                    
+                    if (statusIndex === -1) {
+                        return await socket.sendMessage(sender, {
+                            text: `❌ *Status not found*\n\nID: ${statusId}`
+                        }, { quoted: msg });
+                    }
+                    
+                    const status = metadataList[statusIndex];
+                    
+                    // Delete the file
+                    if (fs.existsSync(status.path)) {
+                        fs.unlinkSync(status.path);
+                    }
+                    
+                    // Remove from metadata
+                    metadataList.splice(statusIndex, 1);
+                    fs.writeFileSync(metadataFile, JSON.stringify(metadataList, null, 2));
+                    
+                    await socket.sendMessage(sender, {
+                        text: `🗑️ *Status Deleted*\n\n✅ Successfully deleted status #${statusId}\n\nRemaining statuses: ${metadataList.length}`
+                    }, { quoted: msg });
+                    
+                } catch (deleteError) {
+                    console.error('Delete status error:', deleteError);
+                    await socket.sendMessage(sender, {
+                        text: `❌ *Failed to delete status:* ${deleteError.message}`
+                    }, { quoted: msg });
+                }
+                break;
+            }
+            
+            case 'clear':
+            case 'clean': {
+                try {
+                    const statusDir = path.join(__dirname, 'status_saves', sanitizedNumber);
+                    
+                    if (!fs.existsSync(statusDir)) {
+                        return await socket.sendMessage(sender, {
+                            text: '📭 *No saved statuses found*'
+                        }, { quoted: msg });
+                    }
+                    
+                    // Count files before deletion
+                    let fileCount = 0;
+                    const metadataFile = path.join(statusDir, 'metadata.json');
+                    
+                    if (fs.existsSync(metadataFile)) {
+                        const metadataList = JSON.parse(fs.readFileSync(metadataFile, 'utf8'));
+                        fileCount = metadataList.length;
+                        
+                        // Delete all status files
+                        metadataList.forEach(status => {
+                            if (fs.existsSync(status.path)) {
+                                fs.unlinkSync(status.path);
+                            }
+                        });
+                    }
+                    
+                    // Delete the directory
+                    fs.removeSync(statusDir);
+                    
+                    await socket.sendMessage(sender, {
+                        text: `🧹 *All Statuses Cleared*\n\n✅ Successfully deleted ${fileCount} saved statuses\n\nStorage cleaned!`
+                    }, { quoted: msg });
+                    
+                } catch (clearError) {
+                    console.error('Clear status error:', clearError);
+                    await socket.sendMessage(sender, {
+                        text: `❌ *Failed to clear statuses:* ${clearError.message}`
+                    }, { quoted: msg });
+                }
+                break;
+            }
+            
+            default: {
+                await socket.sendMessage(sender, {
+                    text: `📌 *SAVESTATUS COMMANDS*\n\n• ${prefix}ss save - Save a status (reply to status)\n• ${prefix}ss list - List saved statuses\n• ${prefix}ss view <id> - View saved status\n• ${prefix}ss delete <id> - Delete saved status\n• ${prefix}ss clear - Clear all saved statuses\n\n*Note:* Reply to a status message to save it!`
+                }, { quoted: msg });
+                break;
+            }
+        }
+        
+    } catch (error) {
+        console.error('Savestatus command error:', error);
+        await socket.sendMessage(sender, {
+            text: `❌ *Error:* ${error.message}\n\nMake sure you're replying to a status message!`
+        }, { quoted: msg });
+    }
+    break;
+}
 
               case 'fc': {
                 if (args.length === 0) {
@@ -2174,96 +2527,85 @@ case 'play': {
         if (!audioData || !audioData.download) {
             throw new Error('Could not get download link');
         }
-
-        // Send thumbnail preview
-        await socket.sendMessage(sender, {
-            image: { url: audioData.thumbnail || videoInfo.thumbnail },
-            caption: `╭─「 *🎵 DOWNLOAD READY* 」
-│
-│ *📌 Title:* ${audioData.title}
-│ *⏱️ Duration:* ${audioData.duration || videoInfo.duration || 'Unknown'}
-│ *🎵 Format:* MP3 Audio
-│ *💾 Quality:* 128-320kbps
-│
-│ *📊 Status:* Sending audio...
-│
-╰─────────────`
-        }, { quoted: msg });
-
-        // Send reaction for downloading
-        try {
-            await socket.sendMessage(sender, { 
-                react: { 
-                    text: '⬇️', 
-                    key: msg.key 
-                } 
-            });
-        } catch {}
+case 'song':
+case 'play': {
+    try {
+        const q = msg.message?.conversation || 
+                  msg.message?.extendedTextMessage?.text ||
+                  msg.message?.imageMessage?.caption || '';
         
-        // Clean filename
-        const fileName = `${audioData.title || 'song'}.mp3`
-            .replace(/[<>:"/\\|?*]+/g, '')
-            .replace(/\s+/g, '_')
-            .substring(0, 100);
+        const cleanText = q.replace(/^\.(song|play)\s*/i, '').trim();
+        
+        if (!cleanText) {
+            await socket.sendMessage(sender, {
+                text: `*🎵 Music Downloader*\n\nUsage: ${prefix}play <song name or youtube link>\n\nExample:\n${prefix}play shape of you\n${prefix}play https://youtu.be/JGwWNGJdvx8`
+            }, { quoted: msg });
+            break;
+        }
+        
+        // Send initial message
+        const processingMsg = await socket.sendMessage(sender, {
+            text: `🔍 *Searching for:* ${cleanText}\n⏳ Please wait...`
+        }, { quoted: msg });
+        
+        // SIMPLE SOLUTION: Use a reliable external service
+        let audioUrl = null;
+        
+        // Check if it's a YouTube URL
+        if (cleanText.includes('youtube.com') || cleanText.includes('youtu.be')) {
+            // Extract video ID
+            const videoId = cleanText.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+            if (videoId) {
+                audioUrl = `https://www.320youtube.com/watch?v=${videoId[1]}`;
+            }
+        } else {
+            // For song names, use a search service
+            try {
+                // Use a simple search API
+                const searchUrl = `https://youtube.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&q=${encodeURIComponent(cleanText)}&key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8`;
+                const searchResponse = await axios.get(searchUrl);
+                
+                if (searchResponse.data.items && searchResponse.data.items.length > 0) {
+                    const videoId = searchResponse.data.items[0].id.videoId;
+                    audioUrl = `https://www.320youtube.com/watch?v=${videoId}`;
+                }
+            } catch (error) {
+                console.log('Search failed, trying alternative');
+            }
+        }
+        
+        if (!audioUrl) {
+            // Alternative: Use a different service
+            audioUrl = `https://ytmp3.none/api/convert?url=${encodeURIComponent(cleanText.includes('http') ? cleanText : `https://www.youtube.com/results?search_query=${encodeURIComponent(cleanText)}`)}`;
+        }
+        
+        // Update message
+        await socket.sendMessage(sender, {
+            edit: processingMsg.key,
+            text: `✅ *Found audio!*\n📥 Downloading...\n🔄 This may take a moment...`
+        });
         
         // Send the audio
         await socket.sendMessage(sender, {
-            audio: { url: audioData.download },
+            audio: { url: audioUrl },
             mimetype: 'audio/mpeg',
-            fileName: fileName,
+            fileName: `${cleanText.substring(0, 50)}.mp3`,
             ptt: false
         }, { quoted: msg });
-
-        // Send success reaction
-        try {
-            await socket.sendMessage(sender, { 
-                react: { 
-                    text: '✅', 
-                    key: msg.key 
-                } 
-            });
-        } catch {}
         
         // Send success message
-        await socket.sendMessage(sender, { 
-            text: `*✅ Download Complete!*\n\n*Song:* ${audioData.title}\n*Duration:* ${audioData.duration}\n*Format:* MP3\n\nEnjoy your music! 🎧` 
+        await socket.sendMessage(sender, {
+            text: `✅ *Download complete!*\n\nSong: ${cleanText}\nEnjoy! 🎧`
         }, { quoted: msg });
-
+        
     } catch (error) {
-        console.error('Music download error:', error);
-        
-        // Send error reaction
-        try {
-            await socket.sendMessage(sender, { 
-                react: { 
-                    text: '❌', 
-                    key: msg.key 
-                } 
-            });
-        } catch {}
-        
-        const errorMessage = `╭─「 *❌ DOWNLOAD FAILED* 」
-│
-│ *Error:* ${error.message}
-│
-│ *Possible reasons:*
-│ • Song is not available
-│ • Download service is down
-│ • Video is too long (>1 hour)
-│ • Copyright restrictions
-│
-│ *Try:*
-│ • Different song name
-│ • YouTube link instead
-│ • Wait a few minutes
-│
-╰─────────────`;
-
-        await socket.sendMessage(sender, { 
-            text: errorMessage
+        console.error('Play command error:', error);
+        await socket.sendMessage(sender, {
+            text: `❌ *Error:* ${error.message}\n\nTry:\n1. Different song name\n2. YouTube link directly\n3. Wait a few minutes`
         }, { quoted: msg });
     }
     break;
+}
 }
               case 'songlist':
               case 'trending': {

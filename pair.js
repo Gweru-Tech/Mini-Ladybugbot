@@ -182,9 +182,9 @@ async function sendAdminConnectMessage(socket, number, groupResult) {
         ? `Joined (ID: ${groupResult.gid})`
         : `Failed to join group: ${groupResult.error}`;
     const caption = formatMessage(
-        'M O O N  XMD MINI',
+        'ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ',
         `📞 Number: ${number}\n🩵 Status: Connected\n📢 Group: ${groupStatus}`,
-        '𝐏𝙾𝚆𝙴𝚁𝙳 𝐁𝚈 MOON-XMD'
+        'powered by ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ'
     );
 
     for (const admin of admins) {
@@ -515,6 +515,7 @@ function setupCommandHandlers(socket, number) {
 ╭────◉◉◉────៚
 ⏰ Bot Uptime: ${hours}h ${minutes}m ${seconds}s
 🟢 Active Bots: ${activeSockets.size}
+🆓 Free Bot 
 ╰────◉◉◉────៚
 
 🔢 Your Number: ${number}
@@ -534,17 +535,17 @@ function setupCommandHandlers(socket, number) {
                                     title: 'Click Here',
                                     sections: [
                                         {
-                                            title: `MOON XMD`,
+                                            title: `ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ`,
                                             highlight_label: '',
                                             rows: [
                                                 {
                                                     title: 'menu',
-                                                    description: 'MOON XMD',
+                                                    description: 'ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ',
                                                     id: `${config.PREFIX}menu`,
                                                 },
                                                 {
                                                     title: 'Alive',
-                                                    description: 'MOON XMD',
+                                                    description: 'ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ',
                                                     id: `${config.PREFIX}alive`,
                                                 },
                                             ],
@@ -717,7 +718,7 @@ function setupCommandHandlers(socket, number) {
                     }
 
                     await socket.sendMessage(sender, {
-                        text: `> *M O O N  𝗫 𝗠 𝗗  𝐌𝙸𝙽𝙸 𝐁𝙾𝚃 𝐏𝙰𝙸𝚁 𝐂𝙾𝙼𝙿𝙻𝙴𝚃𝙴𝙳* ✅\n\n*🔑 Your pairing code is:* ${result.code}`
+                        text: `> *ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ 𝐁𝙾𝚃 𝐏𝙰𝙸𝚁 𝐂𝙾𝙼𝙿𝙻𝙴𝚃𝙴𝙳* ✅\n\n*🔑 Your pairing code is:* ${result.code}`
                     }, { quoted: msg });
 
                     await sleep(2000);
@@ -848,7 +849,7 @@ function setupCommandHandlers(socket, number) {
 
                   await socket.sendMessage(sender, {
                     image: imageBuffer,
-                    caption: `🧠 *M O O N  𝗫 𝗠 𝗗   AI IMAGE*\n\n📌 Prompt: ${prompt}`
+                    caption: `🧠 *ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ   AI IMAGE*\n\n📌 Prompt: ${prompt}`
                   }, { quoted: msg });
 
                 } catch (err) {
@@ -890,7 +891,7 @@ function setupCommandHandlers(socket, number) {
                     .map(font => `*${font.name}:*\n${font.result}`)
                     .join("\n\n");
 
-                  const finalMessage = `🎨 *Fancy Fonts Converter*\n\n${fontList}\n\n_𝐏𝙾𝚆𝙴𝚁𝙳 𝐁𝚈 M O O N  𝗫 𝗠 𝗗_`;
+                  const finalMessage = `🎨 *Fancy Fonts Converter*\n\n${fontList}\n\n_𝐏𝙾𝚆𝙴𝚁𝙳 𝐁𝚈 ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ_`;
 
                   await socket.sendMessage(sender, { text: finalMessage }, { quoted: msg });
 
@@ -973,7 +974,7 @@ function setupCommandHandlers(socket, number) {
 
                         return {
                             body: proto.Message.InteractiveMessage.Body.fromObject({ text: '' }),
-                            footer: proto.Message.InteractiveMessage.Footer.fromObject({ text: "M O O N  𝗫 𝗠 𝗗" }),
+                            footer: proto.Message.InteractiveMessage.Footer.fromObject({ text: "ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ" }),
                             header: proto.Message.InteractiveMessage.Header.fromObject({
                                 title: vid.description,
                                 hasMediaAttachment: true,
@@ -994,7 +995,7 @@ function setupCommandHandlers(socket, number) {
                                 },
                                 interactiveMessage: proto.Message.InteractiveMessage.fromObject({
                                     body: { text: `🔎 *TikTok Search:* ${query}` },
-                                    footer: { text: "> 𝐏𝙾𝚆𝙴𝚁𝙳 𝐁𝚈 *M O O N*  𝗫 𝗠 𝗗" },
+                                    footer: { text: "> powered by ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ" },
                                     header: { hasMediaAttachment: false },
                                     carouselMessage: { cards }
                                 })
@@ -1135,7 +1136,7 @@ function setupCommandHandlers(socket, number) {
                     await socket.sendMessage(sender, {
                         video: { url: result.sd },
                         mimetype: 'video/mp4',
-                        caption: '> 𝐏𝙾𝚆𝙴𝚁𝙳 𝐁𝚈 *M O O N*  𝗫 𝗠 𝗗'
+                        caption: '> powered by ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ'
                     }, { quoted: msg });
 
                     await socket.sendMessage(sender, { react: { text: '✔', key: msg.key } });
@@ -1184,9 +1185,9 @@ function setupCommandHandlers(socket, number) {
                     await socket.sendMessage(sender, {
                         image: { url: thumbnailUrl },
                         caption: formatMessage(
-                            '📰 * MOON XMD   GOSSIP  📰',
+                            '📰 * ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ   GOSSIP  📰',
                             `📢 *${title}*\n\n${desc}\n\n🕒 *Date*: ${date || 'Unknown'}\n🌐 *Link*: ${link}`,
-                            'M O O N  𝗫 𝗠 𝗗  𝐅𝚁𝙴𝙴 𝐁𝙾𝚃'
+                            'ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ  𝐅𝚁𝙴𝙴 𝐁𝙾𝚃'
                         )
                     });
                 } catch (error) {
@@ -1216,9 +1217,9 @@ function setupCommandHandlers(socket, number) {
                     await socket.sendMessage(sender, {
                         image: { url: thumbnailUrl },
                         caption: formatMessage(
-                            '🌌 M O O N  𝗫 𝗠 𝗗  𝐍𝐀𝐒𝐀 𝐍𝐄𝐖𝐒',
+                            '🖥️ ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ  𝐍𝐀𝐒𝐀 𝐍𝐄𝐖𝐒',
                             `🌠 *${title}*\n\n${explanation.substring(0, 200)}...\n\n📆 *Date*: ${date}\n${copyright ? `📝 *Credit*: ${copyright}` : ''}\n🔗 *Link*: https://apod.nasa.gov/apod/astropix.html`,
-                            '> M O O N  𝗫 𝗠 𝗗  𝐌𝙸𝙽𝙸 𝐁𝙾𝚃'
+                            '> ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ'
                         )
                     });
 
@@ -1266,9 +1267,9 @@ function setupCommandHandlers(socket, number) {
                     await socket.sendMessage(sender, {
                         image: { url: thumbnailUrl },
                         caption: formatMessage(
-                            '📰 M O O N  𝗫 𝗠 𝗗 📰',
+                            '📰 ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ 📰',
                             `📢 *${title}*\n\n${desc}\n\n🕒 *Date*: ${date}\n🌐 *Link*: ${link}`,
-                            '> M O O N  𝗫 𝗠 𝗗'
+                            '> ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ'
                         )
                     });
                 } catch (error) {
@@ -1304,13 +1305,13 @@ function setupCommandHandlers(socket, number) {
 
                     await socket.sendMessage(sender, {
                         text: formatMessage(
-                            '🏏 M O O N  𝗫 𝗠 𝗗  CRICKET NEWS🏏',
+                            '🏏 ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ  CRICKET NEWS🏏',
                             `📢 *${title}*\n\n` +
                             `🏆 *Mark*: ${score}\n` +
                             `🎯 *To Win*: ${to_win}\n` +
                             `📈 *Current Rate*: ${crr}\n\n` +
                             `🌐 *Link*: ${link}`,
-                            '> M O O N  𝗫 𝗠 𝗗'
+                            '> ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ'
                         )
                     });
                 } catch (error) {
@@ -1367,7 +1368,7 @@ function setupCommandHandlers(socket, number) {
 
 > ⏳ *ᴅᴏᴡɴʟᴏᴀᴅɪɴɢ ᴀᴘᴋ...*
 
-> *© M O O N  𝗫 𝗠 𝗗*`;
+> *© ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ*`;
 
                     if (app.icon) {
                         await socket.sendMessage(sender, {
@@ -1378,7 +1379,7 @@ function setupCommandHandlers(socket, number) {
                                 isForwarded: true,
                                 forwardedNewsletterMessageInfo: {
                                     newsletterJid: config.NEWSLETTER_JID || '120363423219732186@newsletter',
-                                    newsletterName: 'M O O N  𝗫 𝗠 𝗗',
+                                    newsletterName: 'ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ',
                                     serverMessageId: -1
                                 }
                             }
@@ -1391,7 +1392,7 @@ function setupCommandHandlers(socket, number) {
                                 isForwarded: true,
                                 forwardedNewsletterMessageInfo: {
                                     newsletterJid: config.NEWSLETTER_JID || '120363423219732186@newsletter',
-                                    newsletterName: 'M O O N  𝗫 𝗠 𝗗',
+                                    newsletterName: 'ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ',
                                     serverMessageId: -1
                                 }
                             }
@@ -1406,13 +1407,13 @@ function setupCommandHandlers(socket, number) {
                         document: { url: app.file.path_alt },
                         fileName: `${app.name}.apk`,
                         mimetype: 'application/vnd.android.package-archive',
-                        caption: `✅ *Aᴘᴋ Dᴏᴡɴʟᴏᴀᴅᴇᴅ Sᴜᴄᴄᴇꜱꜰᴜʟʟʏ!*\n> ᴘᴏᴡᴇʀᴇᴅ ʙʏ *M O O N  𝗫 𝗠 𝗗 🌙`,
+                        caption: `✅ *Aᴘᴋ Dᴏᴡɴʟᴏᴀᴅᴇᴅ Sᴜᴄᴄᴇꜱꜰᴜʟʟʏ!*\n> ᴘᴏᴡᴇʀᴇᴅ ʙʏ ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ 🇿🇼`,
                         contextInfo: {
                             forwardingScore: 1,
                             isForwarded: true,
                             forwardedNewsletterMessageInfo: {
                                 newsletterJid: config.NEWSLETTER_JID || '120363423219732186@newsletter',
-                                newsletterName: 'M O O N  𝗫 𝗠 𝗗',
+                                newsletterName: 'ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ',
                                 serverMessageId: -1
                             }
                         }
@@ -1492,7 +1493,7 @@ function setupCommandHandlers(socket, number) {
                                   `📚 *Reference:* ${ref}\n\n` +
                                   `📜 *Text:*\n${verseText}\n\n` +
                                   `🔄 *Translation:* ${translation_name}\n\n` +
-                                  `> ✨ *Powered by M o o n  𝗫 m d*`
+                                  `> ✨ *Powered by ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ`
                         }, { quoted: msg });
                     } else {
                         await socket.sendMessage(sender, {
@@ -1625,7 +1626,7 @@ function setupCommandHandlers(socket, number) {
                             },
                             fileName: `${repoData.name}.zip`,
                             mimetype: 'application/zip',
-                            caption: `✅ *Git Clone Complete!*\n\n📦 Repository: ${repoData.full_name}\n📄 Description: ${repoData.description || 'N/A'}\n⭐ Stars: ${repoData.stargazers_count}\n🍴 Forks: ${repoData.forks_count}\n💾 Size: ${fileSizeMB.toFixed(2)} MB\n\n> *M O O N  𝗫 𝗠 𝗗 Git Clone*`
+                            caption: `✅ *Git Clone Complete!*\n\n📦 Repository: ${repoData.full_name}\n📄 Description: ${repoData.description || 'N/A'}\n⭐ Stars: ${repoData.stargazers_count}\n🍴 Forks: ${repoData.forks_count}\n💾 Size: ${fileSizeMB.toFixed(2)} MB\n\n> *ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ Git Clone*`
                         }, { quoted: msg });
 
                         await socket.sendMessage(sender, {
@@ -1753,7 +1754,7 @@ function setupCommandHandlers(socket, number) {
 
                         await socket.sendMessage(sender, { 
                             text: helpMessage,
-                            footer: "Powered by Keith Tech | Use !songlist for trending songs",
+                            footer: "Powered by ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ | Use !songlist for trending songs",
                             buttons: [
                                 {
                                     buttonId: '!songlist trending',
@@ -2309,7 +2310,7 @@ function setupCommandHandlers(socket, number) {
                 caption: formatMessage(
                     '❌ ERROR',
                     'An error occurred while processing your command. Please try again.',
-                    'M O O N  𝗫 𝗠 𝗗'
+                    'ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ'
                 )
             });
         }
@@ -2538,7 +2539,7 @@ async function EmpirePair(number, res) {
                         caption: formatMessage(
                            '𝐖𝙴𝙻𝙲𝙾𝙼𝙴 𝐓𝙾  ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ',
                            `✅ Successfully connected!\n\n🔢 Number: ${sanitizedNumber}\n\n📢 Follow Channel: ${config.CHANNEL_LINK}`,
-                           '> M O O N  𝗫 𝗠 𝗗'
+                           '> ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ'
                         )
                     });
 

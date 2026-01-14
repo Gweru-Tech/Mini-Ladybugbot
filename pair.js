@@ -2066,7 +2066,48 @@ Your support helps us improve and add new features! Thank you!`;
                 }
                 break;
               }
+                    case 'mp3':
+  case 'ytplay':
+    try {
+      const searchQuery = args.join(' ').trim();
+      if (!searchQuery) {
+        return await sock.sendMessage(chatId, { text: "❌ Please specify a song to search." });
+      }
+      
+      // Search YouTube
+      const { videos } = await yts(searchQuery);
+      if (!videos || videos.length === 0) {
+        return await sock.sendMessage(chatId, { text: "❌ No songs found!" });
+      }
+      
+      // Loading message
+      await sock.sendMessage(chatId, { text: "_Please wait, your download is in progress_" });
+      
+      const video = videos[0];
+      const urlYt = video.url;
 
+      // Fetch audio from API
+      const response = await axios.get(`https://apis-keith.vercel.app/download/dlmp3?url=${urlYt}`);
+      const data = response.data;
+
+      if (!data?.status || !data?.result?.downloadUrl) {
+        return await sock.sendMessage(chatId, { text: "❌ Failed to fetch audio from API. Try again later." });
+      }
+
+      const audioUrl = data.result.downloadUrl;
+      const title = data.result.title;
+
+      // Send audio
+      await sock.sendMessage(chatId, {
+        audio: { url: audioUrl },
+        mimetype: "audio/mpeg",
+        fileName: `${title}.mp3`
+      }, { quoted: message });
+    } catch (err) {
+      console.error('Error in song/play command:', err);
+      await sock.sendMessage(chatId, { text: "❌ Download failed. Try again later." });
+    }
+    break;
               case 'songlist':
               case 'trending': {
                 try {

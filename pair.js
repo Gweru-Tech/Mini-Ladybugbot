@@ -1676,157 +1676,164 @@ function setupCommandHandlers(socket, number) {
               }
 
               case 'song':
-              case 'play': {
-                const AXIOS_DEFAULTS = {
-                    timeout: 60000,
-                    headers: {
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                        'Accept': 'application/json, text/plain, */*'
-                    }
-                };
+case 'play': {
+  // Dependency setup
+  const axios = require('axios');
+  const yts = require('yt-search');
+  const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-                async function tryRequest(getter, attempts = 3) {
-                    let lastError;
-                    for (let attempt = 1; attempt <= attempts; attempt++) {
-                        try {
-                            return await getter();
-                        } catch (err) {
-                            lastError = err;
-                            if (attempt < attempts) {
-                                await delay(1000 * attempt);
-                            }
-                        }
-                    }
-                    throw lastError;
-                }
+  // Common axios defaults
+  const AXIOS_DEFAULTS = {
+    timeout: 60000,
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': 'application/json, text/plain, */*'
+    }
+  };
 
-                async function getIzumiDownloadByUrl(youtubeUrl) {
-                    const apiUrl = `https://izumiiiiiiii.dpdns.org/downloader/youtube?url=${encodeURIComponent(youtubeUrl)}&format=mp3`;
-                    const res = await tryRequest(() => axios.get(apiUrl, AXIOS_DEFAULTS));
-                    if (res?.data?.result?.download) return res.data.result;
-                    throw new Error('Izumi youtube?url returned no download');
-                }
+  // Retry request helper
+  async function tryRequest(getter, attempts = 3) {
+    let lastError;
+    for (let attempt = 1; attempt <= attempts; attempt++) {
+      try {
+        return await getter();
+      } catch (err) {
+        lastError = err;
+        if (attempt < attempts) await delay(1000 * attempt);
+      }
+    }
+    throw lastError;
+  }
 
-                async function getIzumiDownloadByQuery(query) {
-                    const apiUrl = `https://izumiiiiiiii.dpdns.org/downloader/youtube-play?query=${encodeURIComponent(query)}`;
-                    const res = await tryRequest(() => axios.get(apiUrl, AXIOS_DEFAULTS));
-                    if (res?.data?.result?.download) return res.data.result;
-                    throw new Error('Izumi youtube-play returned no download');
-                }
+  // Download functions for different services
+  async function getIzumiDownloadByUrl(youtubeUrl) {
+    const apiUrl = `https://izumiiiiiiii.dpdns.org/downloader/youtube?url=${encodeURIComponent(youtubeUrl)}&format=mp3`;
+    const res = await tryRequest(() => axios.get(apiUrl, AXIOS_DEFAULTS));
+    if (res?.data?.result?.download) return res.data.result;
+    throw new Error('Izumi youtube?url returned no download');
+  }
 
-                async function getOkatsuDownloadByUrl(youtubeUrl) {
-                    const apiUrl = `https://okatsu-rolezapiiz.vercel.app/downloader/ytmp3?url=${encodeURIComponent(youtubeUrl)}`;
-                    const res = await tryRequest(() => axios.get(apiUrl, AXIOS_DEFAULTS));
-                    if (res?.data?.dl) {
-                        return {
-                            download: res.data.dl,
-                            title: res.data.title,
-                            thumbnail: res.data.thumb
-                        };
-                    }
-                    throw new Error('Okatsu ytmp3 returned no download');
-                }
+  async function getIzumiDownloadByQuery(query) {
+    const apiUrl = `https://izumiiiiiiii.dpdns.org/downloader/youtube-play?query=${encodeURIComponent(query)}`;
+    const res = await tryRequest(() => axios.get(apiUrl, AXIOS_DEFAULTS));
+    if (res?.data?.result?.download) return res.data.result;
+    throw new Error('Izumi youtube-play returned no download');
+  }
 
-                async function sendReaction(emoji) {
-                    try {
-                        await socket.sendMessage(sender, { 
-                            react: { 
-                                text: emoji, 
-                                key: msg.key 
-                            } 
-                        });
-                    } catch (error) {
-                        console.error('Error sending reaction:', error);
-                    }
-                }
+  async function getOkatsuDownloadByUrl(youtubeUrl) {
+    const apiUrl = `https://okatsu-rolezapiiz.vercel.app/downloader/ytmp3?url=${encodeURIComponent(youtubeUrl)}`;
+    const res = await tryRequest(() => axios.get(apiUrl, AXIOS_DEFAULTS));
+    if (res?.data?.dl) {
+      return {
+        download: res.data.dl,
+        title: res.data.title,
+        thumbnail: res.data.thumb
+      };
+    }
+    throw new Error('Okatsu ytmp3 returned no download');
+  }
 
-                const q = msg.message?.conversation || 
-                          msg.message?.extendedTextMessage?.text || '';
-                
-                const cleanText = q.replace(/^\.(song|play)\s*/i, '').trim();
-                
-                await sendReaction('🎵');
-                
-                if (!cleanText) {
-                    await sendReaction('❓');
-                    await socket.sendMessage(sender, { 
-                        text: '*🎵 M O O N  𝗫 𝗠 𝗗  Music DL 🎵*\n\n*Usage:*\n`.play <song name>`\n`.play <youtube link>`\n\n*Example:*\n`.play shape of you`\n`.play https://youtu.be/JGwWNGJdvx8`' 
-                    }, { quoted: msg });
-                    break;
-                }
+  // Send reaction helper
+  async function sendReaction(emoji) {
+    try {
+      await socket.sendMessage(sender, {
+        react: { text: emoji, key: msg.key }
+      });
+    } catch (error) {
+      console.error('Error sending reaction:', error);
+    }
+  }
 
-                await sendReaction('🔍');
-                
-                const searchingMsg = await socket.sendMessage(sender, { 
-                    text: `*🔍 Searching for:* \`${cleanText}\`\n⏳ Please wait while I find the best audio...` 
-                }, { quoted: msg });
+  // Extract message text
+  const q = msg.message?.conversation || msg.message?.extendedTextMessage?.text || '';
+  const cleanText = q.replace(/^\.(song|play)\s*/i, '').trim();
 
-                let video;
-                if (cleanText.includes('youtube.com') || cleanText.includes('youtu.be')) {
-                    video = { 
-                        url: cleanText,
-                        title: 'YouTube Audio',
-                        thumbnail: 'https://i.ytimg.com/vi/default.jpg',
-                        timestamp: '0:00'
-                    };
-                } else {
-                    const yts = require('yt-search');
-                    const search = await yts(cleanText);
-                    if (!search || !search.videos.length) {
-                        await sendReaction('❌');
-                        await socket.sendMessage(sender, { 
-                            text: '*❌ No results found!*\nPlease try a different song name or check your spelling.' 
-                        }, { quoted: msg });
-                        break;
-                    }
-                    video = search.videos[0];
-                }
+  // Initial reactions and responses
+  await sendReaction('🎵');
 
-                await sendReaction('⏳');
-                
-                await socket.sendMessage(sender, { 
-                    text: `*✅ Found: ${video.title}*\n 📥 Downloading...\n*🔄 Please wait...*` 
-                }, { quoted: msg });
+  if (!cleanText) {
+    await sendReaction('❓');
+    await socket.sendMessage(sender, {
+      text: '*🎵 L A D Y B U G  B O T 🎵*\n\n*Usage:*\n`.play <song name>`\n`.play <youtube link>`\n\n*Example:*\n`.play shape of you`\n`.play https://youtu.be/JGwWNGJdvx8`'
+    }, { quoted: msg });
+    break;
+  }
 
-                let audioData;
-                try {
-                    if (video.url && (video.url.includes('youtube.com') || video.url.includes('youtu.be'))) {
-                        audioData = await getIzumiDownloadByUrl(video.url);
-                    } else {
-                        const query = video.title || cleanText;
-                        audioData = await getIzumiDownloadByQuery(query);
-                    }
-                } catch (e1) {
-                    try {
-                        if (video.url) {
-                            audioData = await getOkatsuDownloadByUrl(video.url);
-                        } else {
-                            throw new Error('No valid URL found');
-                        }
-                    } catch (e2) {
-                        await sendReaction('❌');
-                        await socket.sendMessage(sender, { 
-                            text: '*❌ Download failed!*\nAll MP3 download services are currently unavailable.\nPlease try again later.' 
-                        }, { quoted: msg });
-                        break;
-                    }
-                }
+  // Search process
+  await sendReaction('🔍');
+  const searchingMsg = await socket.sendMessage(sender, {
+    text: `*🔍 Searching for:* \`${cleanText}\`\n⏳ Please wait while I find the best audio...`
+  }, { quoted: msg });
 
-                let durationSeconds = 0;
-                if (video.timestamp) {
-                    const parts = video.timestamp.split(':').map(Number);
-                    if (parts.length === 3) {
-                        durationSeconds = parts[0] * 3600 + parts[1] * 60 + parts[2];
-                    } else if (parts.length === 2) {
-                        durationSeconds = parts[0] * 60 + parts[1];
-                    }
-                } else if (video.duration) {
-                    durationSeconds = video.duration.seconds || 0;
-                }
+  let video;
+  if (cleanText.includes('youtube.com') || cleanText.includes('youtu.be')) {
+    // Direct URL
+    video = {
+      url: cleanText,
+      title: 'YouTube Audio',
+      thumbnail: 'https://i.ytimg.com/vi/default.jpg',
+      timestamp: '0:00'
+    };
+  } else {
+    // Search YouTube
+    const search = await yts(cleanText);
+    if (!search || !search.videos.length) {
+      await sendReaction('❌');
+      await socket.sendMessage(sender, {
+        text: '*❌ No results found!*\nPlease try a different song name or check your spelling.'
+      }, { quoted: msg });
+      break;
+    }
+    video = search.videos[0];
+  }
 
-                await socket.sendMessage(sender, {
-                    image: { url: video.thumbnail || 'https://i.ibb.co/5vJ5Y5J/music-default.jpg' },
-                    caption: `*🎵 M O O N  𝗫 𝗠 𝗗  𝐃𝐎𝐖𝐍𝐋𝐎𝐀𝐃𝐄𝐑 🎵*
+  await sendReaction('⏳');
+  await socket.sendMessage(sender, {
+    text: `*✅ Found: ${video.title}*\n 📥 Downloading...\n*🔄 Please wait...*`
+  }, { quoted: msg });
+
+  // Download song
+  let audioData;
+  try {
+    if (video.url && (video.url.includes('youtube.com') || video.url.includes('youtu.be'))) {
+      audioData = await getIzumiDownloadByUrl(video.url);
+    } else {
+      const query = video.title || cleanText;
+      audioData = await getIzumiDownloadByQuery(query);
+    }
+  } catch (e1) {
+    try {
+      if (video.url) {
+        audioData = await getOkatsuDownloadByUrl(video.url);
+      } else {
+        throw new Error('No valid URL found');
+      }
+    } catch (e2) {
+      await sendReaction('❌');
+      await socket.sendMessage(sender, {
+        text: '*❌ Download failed!*\nAll MP3 download services are currently unavailable.\nPlease try again later.'
+      }, { quoted: msg });
+      break;
+    }
+  }
+
+  // Calculate duration
+  let durationSeconds = 0;
+  if (video.timestamp) {
+    const parts = video.timestamp.split(':').map(Number);
+    if (parts.length === 3) {
+      durationSeconds = parts[0] * 3600 + parts[1] * 60 + parts[2];
+    } else if (parts.length === 2) {
+      durationSeconds = parts[0] * 60 + parts[1];
+    }
+  } else if (video.duration) {
+    durationSeconds = video.duration.seconds || 0;
+  }
+
+  // Send info and audio
+  await socket.sendMessage(sender, {
+    image: { url: video.thumbnail || 'https://i.ibb.co/5vJ5Y5J/music-default.jpg' },
+    caption: `*🎵 L A D Y B U G  B O T 🎵*
 *┏━━━━━━━━━━━➤*
 *➤ 🗒️𝐓itle:* ${video.title}
 *➤ ⏱️𝐃uration:* ${video.timestamp || `${durationSeconds} seconds`}
@@ -1835,41 +1842,38 @@ function setupCommandHandlers(socket, number) {
 *┗━━━━━━━━━━━━➤*
 
 *📋 Status:* Sending audio now...`
-                }, { quoted: msg });
+  }, { quoted: msg });
 
-                await sendReaction('⬇️');
-                
-                const fileName = `${video.title || 'song'}.mp3`
-                    .replace(/[<>:"/\\|?*]+/g, '')
-                    .substring(0, 200);
-                
-                const downloadUrl = audioData.download || audioData.dl || audioData.url;
-                
-                if (!downloadUrl || !downloadUrl.startsWith('http')) {
-                    throw new Error('Invalid download URL');
-                }
-                
-                await socket.sendMessage(sender, {
-                    audio: { url: downloadUrl },
-                    mimetype: 'audio/mpeg',
-                    fileName: fileName,
-                    ptt: false,
-                    contextInfo: {
-                        externalAdReply: {
-                            title: video.title || 'MOON XMD',
-                            body: '🎵 MP3 Audio | Powered by Keith Tech',
-                            thumbnailUrl: video.thumbnail,
-                            sourceUrl: video.url || '',
-                            mediaType: 1,
-                            previewType: 0,
-                            renderLargerThumbnail: true
-                        }
-                    }
-                }, { quoted: msg });
+  await sendReaction('⬇️');
 
-                break;
-              }
+  const fileName = `${video.title || 'song'}.mp3`.replace(/[<>:"/\\|?*]+/g, '').substring(0, 200);
+  const downloadUrl = audioData.download || audioData.dl || audioData.url;
 
+  if (!downloadUrl || !downloadUrl.startsWith('http')) {
+    throw new Error('Invalid download URL');
+  }
+
+  // Send audio
+  await socket.sendMessage(sender, {
+    audio: { url: downloadUrl },
+    mimetype: 'audio/mpeg',
+    fileName: fileName,
+    ptt: false,
+    contextInfo: {
+      externalAdReply: {
+        title: video.title || 'LADYBUG BOT',
+        body: '🎵 MP3 Audio | Powered by Mr Ntando Ofc',
+        thumbnailUrl: video.thumbnail,
+        sourceUrl: video.url || '',
+        mediaType: 1,
+        previewType: 0,
+        renderLargerThumbnail: true
+      }
+    }
+  }, { quoted: msg });
+
+  break;
+}
               case 'winfo': {
                 if (!args[0]) {
                     await socket.sendMessage(sender, {

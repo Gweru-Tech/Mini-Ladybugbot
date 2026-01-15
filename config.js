@@ -1,44 +1,56 @@
-require('dotenv').config();
-
-const parseList = (envVar, fallback) => {
-  if (!envVar) return fallback;
-  try {
-    return JSON.parse(envVar);
-  } catch {
-    return envVar.split(',').map(s => s.trim()).filter(Boolean);
-  }
-};
-
 module.exports = {
-  // MongoDB configuration (replaces GitHub)
-  MONGODB_URI: process.env.MONGODB_URI || 'mongodb+srv://ntando:ih2T2UfoPwWrAZzJ@ladybug2017.xcgevpw.mongodb.net/?appName=Ladybug2017',
-  
-  // Bot behavior
-  AUTO_VIEW_STATUS: process.env.AUTO_VIEW_STATUS || 'true',
-  AUTO_LIKE_STATUS: process.env.AUTO_LIKE_STATUS || 'true',
-  AUTO_RECORDING: process.env.AUTO_RECORDING || 'true',
-  AUTO_LIKE_EMOJI: parseList(process.env.AUTO_LIKE_EMOJI, ['💋', '🍬', '🫆', '💗', '🎈', '🎉', '🥳', '❤️', '🧫', '🐭']),
-  PREFIX: process.env.PREFIX || '.',
-  MAX_RETRIES: parseInt(process.env.MAX_RETRIES || '3', 10),
+    // MongoDB Connection
+    MONGODB_URI: process.env.MONGODB_URI || 'mongodb+srv://ntando:ih2T2UfoPwWrAZzJ@ladybug2017.xcgevpw.mongodb.net/?appName=Ladybug2017',
 
-  // Paths
-  ADMIN_LIST_PATH: process.env.ADMIN_LIST_PATH || './admin.json',
-  SESSION_BASE_PATH: process.env.SESSION_BASE_PATH || './session',
-  NUMBER_LIST_PATH: process.env.NUMBER_LIST_PATH || './numbers.json',
+    // Bot Configuration
+    PREFIX: process.env.PREFIX || '.',
+    OWNER_NUMBER: process.env.OWNER_NUMBER || '263776509966',
+    MAX_RETRIES: parseInt(process.env.MAX_RETRIES) || 5,
+    OTP_EXPIRY: parseInt(process.env.OTP_EXPIRY) || 300000, // 5 minutes
 
-  // Images / UI
-  RCD_IMAGE_PATH: process.env.RCD_IMAGE_PATH || 'https://files.catbox.moe/7k4awc.jpeg',
-  CAPTION: process.env.CAPTION || 'ʟᴀᴅʏʙᴜɢ ʙᴏᴛ ᴍɪɴɪ',
+    // Paths
+    SESSION_BASE_PATH: process.env.SESSION_BASE_PATH || './sessions',
+    NUMBER_LIST_PATH: process.env.NUMBER_LIST_PATH || './numbers.json',
+    ADMIN_LIST_PATH: process.env.ADMIN_LIST_PATH || './admins.json',
 
-  // Newsletter / channels
-  NEWSLETTER_JID: (process.env.NEWSLETTER_JID || '120363417440480101@newsletter').trim(),
-  CHANNEL_LINK: process.env.CHANNEL_LINK || 'https://chat.whatsapp.com/LdogfpeSy9AJkvT78WZ9AD',
+    // Auto Features
+    AUTO_RECORDING: process.env.AUTO_RECORDING === 'true' || false,
+    AUTO_VIEW_STATUS: process.env.AUTO_VIEW_STATUS === 'true' || false,
+    AUTO_LIKE_STATUS: process.env.AUTO_LIKE_STATUS === 'true' || false,
+    AUTO_LIKE_EMOJI: (process.env.AUTO_LIKE_EMOJI || '👍,❤️,🔥,😂,😮,😢').split(','),
 
-  // OTP & owner
-  OTP_EXPIRY: parseInt(process.env.OTP_EXPIRY || '300000', 10), // ms
-  OWNER_NUMBER: process.env.OWNER_NUMBER || '263771629199',
+    // Links
+    GROUP_INVITE_LINK: process.env.GROUP_INVITE_LINK || 'https://chat.whatsapp.com/YourGroupLink',
+    CHANNEL_LINK: process.env.CHANNEL_LINK || 'https://whatsapp.com/channel/YourChannelLink',
+    NEWSLETTER_JID: process.env.NEWSLETTER_JID || '120363423219732186@newsletter',
 
-  // Misc
-  GROUP_INVITE_LINK: process.env.GROUP_INVITE_LINK || 'https://chat.whatsapp.com/Ir5dLLFsZVaEXklBsYeHSe?mode=wwt',
-  PM2_NAME: process.env.PM2_NAME || 'LADYBUG-MINI-main'
+    // Media
+    RCD_IMAGE_PATH: process.env.RCD_IMAGE_PATH || 'https://i.imgur.com/default.jpg',
+    CAPTION: process.env.CAPTION || 'Powered by Ladybug Bot',
+
+    // API Configuration
+    GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
+    
+    // Server Configuration
+    PORT: process.env.PORT || 3000,
+    PM2_NAME: process.env.PM2_NAME || 'ladybug-bot',
+
+    // Feature Toggles
+    ENABLE_AUTO_BIO: process.env.ENABLE_AUTO_BIO === 'true' || true,
+    ENABLE_AUTO_TYPING: process.env.ENABLE_AUTO_TYPING === 'true' || true,
+    ENABLE_AUTO_REACT: process.env.ENABLE_AUTO_REACT === 'true' || true,
+    ENABLE_ANTI_DELETE: process.env.ENABLE_ANTI_DELETE === 'true' || true,
+
+    // Download Limits
+    MAX_DOWNLOAD_SIZE: 64, // MB
+    MAX_BOMB_MESSAGES: 20,
+    MAX_APK_SIZE: 500, // MB
+
+    // Timezone
+    TIMEZONE: process.env.TIMEZONE || 'Africa/Harare',
+
+    // Default Settings
+    DEFAULT_AUTO_BIO_INTERVAL: 300000, // 5 minutes
+    DEFAULT_AUTO_TYPING_DELAY: 2000, // 2 seconds
+    DEFAULT_AUTO_REACT_EMOJIS: ['👍', '❤️', '🔥', '😂', '😮', '😢', '👏']
 };
